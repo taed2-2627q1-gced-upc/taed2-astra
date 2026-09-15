@@ -6,6 +6,7 @@
     # Credentials are NOT here - each teammate runs, once per clone:
     #   dvc remote modify --local dagshub access_key_id     <dagshub-token>
     #   dvc remote modify --local dagshub secret_access_key <dagshub-token>
-    # which writes .dvc/config.local, and that file is gitignored.
+    # DagsHub issues ONE token, not a key/secret pair: paste the same token
+    # into both fields. This writes .dvc/config.local, which is gitignored.
     url = s3://dvc
     endpointurl = https://dagshub.com/Santi-49/taed2-astra.s3

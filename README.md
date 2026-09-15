@@ -88,7 +88,8 @@ All four of us must be collaborators on it.
 Get a token from DagsHub (**Settings → Tokens**), then:
 
 ```bash
-# Data remote - writes .dvc/config.local, which is gitignored
+# Data remote - writes .dvc/config.local, which is gitignored.
+# DagsHub issues one token, not a key/secret pair: use it for BOTH fields.
 dvc remote modify --local dagshub access_key_id     <token>
 dvc remote modify --local dagshub secret_access_key <token>
 
