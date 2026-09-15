@@ -66,7 +66,10 @@ Run `make lint` and `make test` before opening a pull request; CI runs the same.
 GitHub Flow: branch off `main`, open a pull request, merge after review.
 
 - Branches: `feature/<short-description>`, `fix/<short-description>`
-- Commits: imperative present tense — `add training stage`, not `added`
+- Commits: [Conventional Commits](https://www.conventionalcommits.org/) —
+  `<type>: <description>` in imperative present tense, e.g.
+  `feat: add training stage`. Types: `feat`, `fix`, `docs`, `refactor`,
+  `test`, `chore`, `ci`, `data`
 - `main` is always green; never push directly to it
 
 ### AI agents do not commit
