@@ -1,0 +1,51 @@
+# The reproducible pipeline. `dvc repro` reruns only the stages whose
+# dependencies or params actually changed.
+
+stages:
+  prepare:
+    cmd: python -m taed2_astra.data.make_dataset
+    deps:
+      - data/raw
+      - src/taed2_astra/data/make_dataset.py
+    params:
+      - dataset
+      - prepare
+    outs:
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+
+  validate:
+    cmd: python -m taed2_astra.data.validate
+    deps:
+      - data/processed/train.parquet
+      - src/taed2_astra/data/validate.py
+    params:
+      - dataset
+    outs:
+      - reports/data_validation.json
+
+  train:
+    cmd: python -m taed2_astra.modeling.train
+    deps:
+      - data/processed/train.parquet
+      - reports/data_validation.json
+      - src/taed2_astra/modeling/train.py
+      - src/taed2_astra/features/build_features.py
+    params:
+      - dataset
+      - train
+    outs:
+      - models/model.pkl
+
+  evaluate:
+    cmd: python -m taed2_astra.modeling.evaluate
+    deps:
+      - data/processed/test.parquet
+      - models/model.pkl
+      - src/taed2_astra/modeling/evaluate.py
+    params:
+      - dataset
+      - evaluate
+    metrics:
+      - metrics/metrics.json:
+          cache: false

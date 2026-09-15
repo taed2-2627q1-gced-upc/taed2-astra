@@ -1,0 +1,15 @@
+{
+  // Prompted on first open of the workspace, so everyone lints with the
+  // same tools the CI pipeline runs.
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-toolsai.jupyter",
+    "github.copilot",
+    "github.copilot-chat",
+    "iterative.dvc",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml"
+  ]
+}

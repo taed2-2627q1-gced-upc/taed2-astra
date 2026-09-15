@@ -1,0 +1,21 @@
+# Every tunable value lives here. Code reads it, DVC hashes it, Git versions it.
+# Changing a value below invalidates exactly the stages that depend on it.
+# TODO(team): fill in the values once the dataset and model are chosen.
+
+dataset:
+  name: ""        # physionet-sepsis | cdc-diabetes
+  target: ""      # name of the label column
+
+prepare:
+  test_size: 0.2
+  random_state: 42
+
+train:
+  random_state: 42
+
+evaluate: {}
+
+mlflow:
+  experiment_name: taed2-astra
+  # Override with MLFLOW_TRACKING_URI=file:./mlruns to log runs locally.
+  tracking_uri: https://dagshub.com/Santi-49/taed2-astra.mlflow

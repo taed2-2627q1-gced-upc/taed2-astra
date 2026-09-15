@@ -1,0 +1,59 @@
+{
+  // ---------------------------------------------------------------------
+  // AI-generated commit messages and PR descriptions.
+  // Keeping the rules in a file (not inline here) means they are reviewed
+  // like any other change and stay in sync with AGENTS.md.
+  // ---------------------------------------------------------------------
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    { "file": ".github/copilot-commit-message-instructions.md" }
+  ],
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    { "file": ".github/copilot-pull-request-description-instructions.md" }
+  ],
+
+  // ---------------------------------------------------------------------
+  // Editor - mirrors the pre-commit hooks so CI never fails on formatting
+  // ---------------------------------------------------------------------
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.rulers": [120],
+  "editor.formatOnSave": true,
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "[markdown]": {
+    // Markdown uses trailing double-space for line breaks.
+    "files.trimTrailingWhitespace": false
+  },
+
+  // ---------------------------------------------------------------------
+  // Python - uv creates .venv, which VS Code discovers automatically
+  // ---------------------------------------------------------------------
+  "ruff.importStrategy": "fromEnvironment",
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+
+  // ---------------------------------------------------------------------
+  // Keep search and the file tree focused on source
+  // ---------------------------------------------------------------------
+  "search.exclude": {
+    "**/.venv": true,
+    "**/mlruns": true,
+    "**/data": true,
+    "**/models": true,
+    "**/uv.lock": true
+  },
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/mlruns/**": true,
+    "**/data/**": true
+  }
+}

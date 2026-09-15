@@ -1,0 +1,11 @@
+[core]
+    remote = dagshub
+    autostage = true
+['remote "dagshub"']
+    # DagsHub's S3-compatible storage (100 GB per repo).
+    # Credentials are NOT here - each teammate runs, once per clone:
+    #   dvc remote modify --local dagshub access_key_id     <dagshub-token>
+    #   dvc remote modify --local dagshub secret_access_key <dagshub-token>
+    # which writes .dvc/config.local, and that file is gitignored.
+    url = s3://dvc
+    endpointurl = https://dagshub.com/Santi-49/taed2-astra.s3

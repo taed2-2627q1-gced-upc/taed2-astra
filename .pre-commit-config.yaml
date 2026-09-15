@@ -1,0 +1,20 @@
+# Runs the same checks as CI, but before the commit exists.
+# Install once per clone:  pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'        # markdown uses trailing spaces for line breaks
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=900"]   # large files belong in DVC, not Git
+        exclude: '\.lock$'
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+      - id: ruff              # lint, fixing what it safely can
+        args: [--fix]
+      - id: ruff-format       # formatting

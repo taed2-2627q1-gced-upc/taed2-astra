@@ -1,0 +1,4 @@
+# Patterns DVC should never traverse when hashing directories.
+*.pyc
+__pycache__/
+.ipynb_checkpoints/

@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // F5 serves the API with reload, so breakpoints work in the endpoints.
+      "name": "FastAPI: serve",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["taed2_astra.api.main:app", "--reload"],
+      "jinja": true
+    },
+    {
+      "name": "Python: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

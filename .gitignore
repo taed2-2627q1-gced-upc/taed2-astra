@@ -1,0 +1,47 @@
+# --- Data and models: tracked by DVC, never by Git ------------------------
+/data/raw/*
+/data/processed/*
+/models/*
+!**/.gitkeep
+!*.dvc
+
+# --- Experiment tracking and reports --------------------------------------
+/mlruns/
+/mlartifacts/
+/reports/emissions/*.csv
+/reports/figures/*
+!/reports/figures/.gitkeep
+# metrics/ and reports/data_validation.json ARE committed: they are the
+# small, reviewable outputs that make a pull request diff meaningful.
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# --- Tooling caches -------------------------------------------------------
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+.dvc/cache
+.dvc/tmp
+
+# --- Environment and editors ----------------------------------------------
+.env
+!.env.template
+!.env.template
+.DS_Store
+.idea/
+
+# Shared VS Code config is tracked so the whole team lints, formats and
+# generates commit messages identically. Personal files stay local.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json

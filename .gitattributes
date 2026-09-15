@@ -1,0 +1,11 @@
+# The team works on Windows; CI and the Virtech VM are Linux. Normalise line
+# endings in the repository so diffs never show a whole file as changed.
+* text=auto eol=lf
+
+# Binary-ish artefacts Git must not touch.
+*.parquet binary
+*.pkl     binary
+*.ipynb   text eol=lf
+
+# uv.lock is generated: keep it out of diff review noise.
+uv.lock linguist-generated=true
