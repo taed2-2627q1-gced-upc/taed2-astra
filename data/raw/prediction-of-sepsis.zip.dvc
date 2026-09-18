@@ -1,0 +1,5 @@
+outs:
+- md5: c0bc7d8788c394d48e16d36fccffb7b7
+  size: 78283714
+  hash: md5
+  path: prediction-of-sepsis.zip
