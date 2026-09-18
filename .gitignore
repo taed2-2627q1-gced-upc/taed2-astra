@@ -1,9 +1,10 @@
 # --- Data and models: tracked by DVC, never by Git ------------------------
-/data/raw/*
-/data/processed/*
-/models/*
-!**/.gitkeep
-!*.dvc
+# No blanket /data/* rule belongs here. DVC writes a .gitignore inside each
+# directory it tracks (data/raw/.gitignore, models/.gitignore, ...) naming
+# exactly the payloads it manages. A blanket rule would additionally hide the
+# .dvc pointer files from DVC's own workspace scanner - which honours git
+# ignore rules but not their negations - silently turning `dvc push` into a
+# no-op that still reports "Everything is up to date".
 
 # --- Experiment tracking and reports --------------------------------------
 /mlruns/

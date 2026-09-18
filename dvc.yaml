@@ -5,7 +5,7 @@ stages:
   prepare:
     cmd: python -m taed2_astra.data.make_dataset
     deps:
-      - data/raw
+      - data/raw/prediction-of-sepsis.zip
       - src/taed2_astra/data/make_dataset.py
     params:
       - dataset
