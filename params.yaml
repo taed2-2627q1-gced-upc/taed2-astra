@@ -1,10 +1,14 @@
 # Every tunable value lives here. Code reads it, DVC hashes it, Git versions it.
 # Changing a value below invalidates exactly the stages that depend on it.
-# TODO(team): fill in the values once the dataset and model are chosen.
 
 dataset:
-  name: ""        # physionet-sepsis | cdc-diabetes
-  target: ""      # name of the label column
+  name: prediction-of-sepsis
+  raw_file: prediction-of-sepsis.zip   # under data/raw, DVC-tracked
+  raw_member: Dataset.csv              # the CSV inside the archive
+  target: SepsisLabel
+  classes: [0, 1]
+  group: Patient_ID                    # rows of one patient never straddle a split
+  drop: ["Unnamed: 0"]                 # pandas index column leaked by the export
 
 prepare:
   test_size: 0.2
@@ -12,8 +16,45 @@ prepare:
 
 train:
   random_state: 42
+  model: hist_gradient_boosting        # candidate written to models/model.pkl
+  candidates:
+    logistic_regression:
+      estimator: logistic_regression
+      C: 1.0
+      max_iter: 1000
+      class_weight: balanced
+    hist_gradient_boosting:
+      estimator: hist_gradient_boosting
+      learning_rate: 0.1
+      max_iter: 300
+      max_leaf_nodes: 31
+      min_samples_leaf: 100
+      class_weight: balanced
+    tabpfn:
+      # Weights: https://huggingface.co/Prior-Labs/TabPFN-v2-clf
+      # Optional dependency: uv sync --group foundation
+      estimator: tabpfn
+      n_estimators: 4
+      device: cpu
+      max_train_rows: 10000
+    ensemble_soft:
+      estimator: soft_voting
+      members: [hist_gradient_boosting, logistic_regression]
+      weights: null                     # null = equal weights
+    ensemble_stacking:
+      estimator: stacking
+      members: [hist_gradient_boosting, logistic_regression]
+      cv: 3
 
-evaluate: {}
+benchmark:
+  models: [logistic_regression, hist_gradient_boosting, tabpfn, ensemble_soft, ensemble_stacking]
+  cv_folds: 3
+  max_rows: null                        # e.g. 200000 for a fast iteration loop
+  latency_batch_size: 1000
+  rank_by: pr_auc
+
+evaluate:
+  threshold: 0.5
 
 mlflow:
   experiment_name: taed2-astra

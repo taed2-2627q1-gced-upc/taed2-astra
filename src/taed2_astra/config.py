@@ -35,6 +35,7 @@ MODEL_PATH = MODELS_DIR / "model.pkl"
 TRAIN_PATH = PROCESSED_DATA_DIR / "train.parquet"
 TEST_PATH = PROCESSED_DATA_DIR / "test.parquet"
 METRICS_PATH = METRICS_DIR / "metrics.json"
+BENCHMARK_PATH = METRICS_DIR / "benchmark.json"
 
 
 def load_params(path: Path = PARAMS_PATH) -> dict:

@@ -106,11 +106,20 @@ in `.env` — it overrides `params.yaml` without editing a DVC-tracked file.
 
 ## Workflow
 
-**Pipeline** — `dvc repro` runs `prepare → validate → train → evaluate`, skipping
-any stage whose dependencies and params are unchanged.
+**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate}`,
+skipping any stage whose dependencies and params are unchanged.
 
-**Experiments** — browse runs on the DagsHub MLflow tab. Training logs params,
-metrics and CodeCarbon emissions per run.
+**Model selection** — `benchmark` scores every candidate listed in
+`params.yaml` (`benchmark.models`) on the same patient-grouped CV folds and
+writes the ranking to `metrics/benchmark.json`. `train.model` picks the
+candidate that ships. Promote one with `dvc exp run -S train.model=<name>`;
+iterate quickly with `-S benchmark.max_rows=200000`. The `tabpfn` candidate
+(Hugging Face `Prior-Labs/TabPFN-v2-clf`) needs `uv sync --group foundation`
+and is skipped otherwise.
+
+**Experiments** — browse runs on the DagsHub MLflow tab. The benchmark logs one
+nested run per candidate (params, mean/std metrics, latency, model size,
+emissions, model artifact); training logs the shipped model the same way.
 
 **API** — `make api`, then open <http://127.0.0.1:8000/docs>.
 

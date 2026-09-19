@@ -3,7 +3,8 @@
 Fails the pipeline when the data stops matching what the model expects, so a
 bad upstream file is caught before training instead of after deployment.
 
-TODO(team): add one expectation per assumption the model relies on.
+The suite below covers the label and grouping contract the modelling stages
+rely on. Milestone 3 extends it with per-feature expectations.
 """
 
 import json
@@ -16,12 +17,22 @@ from taed2_astra.config import REPORTS_DIR, TRAIN_PATH, VALIDATION_PATH, get_log
 log = get_logger(__name__)
 
 
-def build_suite(target: str) -> gx.ExpectationSuite:
+def build_suite(dataset: dict) -> gx.ExpectationSuite:
     """Return the expectations every training set must satisfy."""
-    raise NotImplementedError("Add expectations to the suite")
+    target = dataset["target"]
+    suite = gx.ExpectationSuite(name="processed-train")
+    suite.add_expectation(gx.expectations.ExpectTableRowCountToBeBetween(min_value=1))
+    suite.add_expectation(gx.expectations.ExpectColumnToExist(column=target))
+    suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=target))
+    suite.add_expectation(
+        gx.expectations.ExpectColumnDistinctValuesToBeInSet(column=target, value_set=dataset["classes"])
+    )
+    if dataset.get("group"):
+        suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=dataset["group"]))
+    return suite
 
 
-def validate(df: pd.DataFrame, target: str) -> dict:
+def validate(df: pd.DataFrame, dataset: dict) -> dict:
     """Run the suite against a dataframe and return the result as a dict."""
     context = gx.get_context(mode="ephemeral")
     batch = (
@@ -30,13 +41,13 @@ def validate(df: pd.DataFrame, target: str) -> dict:
         .add_batch_definition_whole_dataframe("all")
         .get_batch(batch_parameters={"dataframe": df})
     )
-    return batch.validate(build_suite(target)).to_json_dict()
+    return batch.validate(build_suite(dataset)).to_json_dict()
 
 
 def main() -> None:
     """Validate the training split and persist the report."""
     params = load_params()
-    result = validate(pd.read_parquet(TRAIN_PATH), params["dataset"]["target"])
+    result = validate(pd.read_parquet(TRAIN_PATH), params["dataset"])
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     with open(VALIDATION_PATH, "w", encoding="utf-8") as handle:
