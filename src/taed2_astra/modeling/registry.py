@@ -81,9 +81,10 @@ def _soft_voting(spec: dict, train_params: dict) -> BaseEstimator:
 
 def _stacking(spec: dict, train_params: dict) -> BaseEstimator:
     members = [(name, build_estimator(name, train_params)) for name in spec["members"]]
+    # Balanced like the members, so the shared decision threshold means the same thing for every candidate.
     return StackingClassifier(
         members,
-        final_estimator=LogisticRegression(random_state=train_params["random_state"]),
+        final_estimator=LogisticRegression(class_weight="balanced", random_state=train_params["random_state"]),
         cv=spec.get("cv", 3),
         stack_method="predict_proba",
     )

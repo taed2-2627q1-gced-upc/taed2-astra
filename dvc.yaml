@@ -1,9 +1,11 @@
 # The reproducible pipeline. `dvc repro` reruns only the stages whose
 # dependencies or params actually changed. ${...} values come from params.yaml.
+# `-X utf8` keeps MLflow's console output from crashing on Windows when stdout
+# is redirected (cp1252 cannot encode its emoji); it is a no-op on Linux.
 
 stages:
   prepare:
-    cmd: python -m taed2_astra.data.make_dataset
+    cmd: python -X utf8 -m taed2_astra.data.make_dataset
     deps:
       - data/raw/${dataset.raw_file}
       - src/taed2_astra/data/make_dataset.py
@@ -15,17 +17,18 @@ stages:
       - data/processed/test.parquet
 
   validate:
-    cmd: python -m taed2_astra.data.validate
+    cmd: python -X utf8 -m taed2_astra.data.validate
     deps:
       - data/processed/train.parquet
       - src/taed2_astra/data/validate.py
     params:
       - dataset
     outs:
-      - reports/data_validation.json
+      - reports/data_validation.json:
+          cache: false   # small and reviewable: committed to Git, not the DVC cache
 
   benchmark:
-    cmd: python -m taed2_astra.modeling.benchmark
+    cmd: python -X utf8 -m taed2_astra.modeling.benchmark
     deps:
       - data/processed/train.parquet
       - reports/data_validation.json
@@ -43,7 +46,7 @@ stages:
           cache: false
 
   train:
-    cmd: python -m taed2_astra.modeling.train
+    cmd: python -X utf8 -m taed2_astra.modeling.train
     deps:
       - data/processed/train.parquet
       - reports/data_validation.json
@@ -57,7 +60,7 @@ stages:
       - models/model.pkl
 
   evaluate:
-    cmd: python -m taed2_astra.modeling.evaluate
+    cmd: python -X utf8 -m taed2_astra.modeling.evaluate
     deps:
       - data/processed/test.parquet
       - models/model.pkl

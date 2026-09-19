@@ -56,7 +56,10 @@ def main() -> None:
             emissions = tracker.stop()
 
         mlflow.log_metric("emissions_kg_co2", emissions or 0.0)
-        mlflow.sklearn.log_model(model, name="model")
+        # MLflow 3 defaults to skops, which rejects make_column_selector; cloudpickle matches models/model.pkl.
+        mlflow.sklearn.log_model(
+            model, name="model", serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE
+        )
 
     with open(MODEL_PATH, "wb") as handle:
         pickle.dump(model, handle)

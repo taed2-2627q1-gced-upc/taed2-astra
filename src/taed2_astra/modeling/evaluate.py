@@ -61,6 +61,7 @@ def main() -> None:
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     with open(METRICS_PATH, "w", encoding="utf-8") as handle:
         json.dump(metrics, handle, indent=2)
+        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
 
     mlflow.set_tracking_uri(get_tracking_uri(params))
     mlflow.set_experiment(params["mlflow"]["experiment_name"])

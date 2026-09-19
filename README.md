@@ -101,8 +101,9 @@ cp .env.template .env
 personal, not shared team-wide. The DagsHub URLs in `.dvc/config` and
 `params.yaml` are public and safe to track.
 
-To log runs locally instead of to DagsHub, set `MLFLOW_TRACKING_URI=file:./mlruns`
+To log runs locally instead of to DagsHub, set `MLFLOW_TRACKING_URI=sqlite:///mlflow.db`
 in `.env` — it overrides `params.yaml` without editing a DVC-tracked file.
+Browse them with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 
 ## Workflow
 

@@ -126,7 +126,8 @@ def _run_candidate(name: str, params: dict, x: pd.DataFrame, y: pd.Series, folds
     summary["latency_ms_per_1k_rows"] = measure_latency(model, x, bench["latency_batch_size"])
     summary["model_size_mb"] = len(pickle.dumps(model)) / 1e6
     mlflow.log_metrics(summary)
-    mlflow.sklearn.log_model(model, name="model")
+    # MLflow 3 defaults to skops, which rejects make_column_selector; cloudpickle matches models/model.pkl.
+    mlflow.sklearn.log_model(model, name="model", serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE)
     mlflow.set_tag("status", "completed")
     log.info("%s: %s", name, {key: round(value, 4) for key, value in summary.items()})
     return {
@@ -191,6 +192,7 @@ def main() -> None:
     }
     with open(BENCHMARK_PATH, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2, default=str)
+        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
     log.info("Ranked by %s:\n%s", rank_by, matrix[["candidate", f"{rank_by}_mean", "latency_ms_per_1k_rows"]])
 
 

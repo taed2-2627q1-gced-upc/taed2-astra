@@ -52,6 +52,7 @@ def main() -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     with open(VALIDATION_PATH, "w", encoding="utf-8") as handle:
         json.dump(result, handle, indent=2)
+        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
 
     if not result["success"]:
         raise ValueError(f"Data validation failed. See {VALIDATION_PATH}")
