@@ -1,11 +1,13 @@
 # The reproducible pipeline. `dvc repro` reruns only the stages whose
-# dependencies or params actually changed.
+# dependencies or params actually changed. ${...} values come from params.yaml.
+# `-X utf8` keeps MLflow's console output from crashing on Windows when stdout
+# is redirected (cp1252 cannot encode its emoji); it is a no-op on Linux.
 
 stages:
   prepare:
-    cmd: python -m taed2_astra.data.make_dataset
+    cmd: python -X utf8 -m taed2_astra.data.make_dataset
     deps:
-      - data/raw/prediction-of-sepsis.zip
+      - data/raw/${dataset.raw_file}
       - src/taed2_astra/data/make_dataset.py
     params:
       - dataset
@@ -15,21 +17,41 @@ stages:
       - data/processed/test.parquet
 
   validate:
-    cmd: python -m taed2_astra.data.validate
+    cmd: python -X utf8 -m taed2_astra.data.validate
     deps:
       - data/processed/train.parquet
       - src/taed2_astra/data/validate.py
     params:
       - dataset
     outs:
+      - reports/data_validation.json:
+          cache: false   # small and reviewable: committed to Git, not the DVC cache
+
+  benchmark:
+    cmd: python -X utf8 -m taed2_astra.modeling.benchmark
+    deps:
+      - data/processed/train.parquet
       - reports/data_validation.json
+      - src/taed2_astra/modeling/benchmark.py
+      - src/taed2_astra/modeling/registry.py
+      - src/taed2_astra/modeling/evaluate.py
+      - src/taed2_astra/features/build_features.py
+    params:
+      - dataset
+      - train
+      - benchmark
+      - evaluate.threshold
+    metrics:
+      - metrics/benchmark.json:
+          cache: false
 
   train:
-    cmd: python -m taed2_astra.modeling.train
+    cmd: python -X utf8 -m taed2_astra.modeling.train
     deps:
       - data/processed/train.parquet
       - reports/data_validation.json
       - src/taed2_astra/modeling/train.py
+      - src/taed2_astra/modeling/registry.py
       - src/taed2_astra/features/build_features.py
     params:
       - dataset
@@ -38,11 +60,13 @@ stages:
       - models/model.pkl
 
   evaluate:
-    cmd: python -m taed2_astra.modeling.evaluate
+    cmd: python -X utf8 -m taed2_astra.modeling.evaluate
     deps:
       - data/processed/test.parquet
       - models/model.pkl
       - src/taed2_astra/modeling/evaluate.py
+      - src/taed2_astra/modeling/predict.py
+      - src/taed2_astra/features/build_features.py
     params:
       - dataset
       - evaluate

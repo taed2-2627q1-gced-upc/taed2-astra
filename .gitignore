@@ -9,6 +9,7 @@
 # --- Experiment tracking and reports --------------------------------------
 /mlruns/
 /mlartifacts/
+/mlflow.db
 /reports/emissions/*.csv
 /reports/figures/*
 !/reports/figures/.gitkeep

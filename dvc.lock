@@ -1,0 +1,274 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -X utf8 -m taed2_astra.data.make_dataset
+    deps:
+    - path: data/raw/prediction-of-sepsis.zip
+      hash: md5
+      md5: c0bc7d8788c394d48e16d36fccffb7b7
+      size: 78283714
+    - path: src/taed2_astra/data/make_dataset.py
+      hash: md5
+      md5: aba6f70711172e70922d4ed12c0ec287
+      size: 2746
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        prepare:
+          test_size: 0.2
+          random_state: 42
+    outs:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: affdf13112dbf301cec404d2abd5a210
+      size: 13834675
+  validate:
+    cmd: python -X utf8 -m taed2_astra.data.validate
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: affdf13112dbf301cec404d2abd5a210
+      size: 13834675
+    - path: src/taed2_astra/data/validate.py
+      hash: md5
+      md5: c69b359d54d66fe13068f10ae585c5ea
+      size: 2394
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+    outs:
+    - path: reports/data_validation.json
+      hash: md5
+      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
+      size: 3754
+  benchmark:
+    cmd: python -X utf8 -m taed2_astra.modeling.benchmark
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: affdf13112dbf301cec404d2abd5a210
+      size: 13834675
+    - path: reports/data_validation.json
+      hash: md5
+      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
+      size: 3754
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/benchmark.py
+      hash: md5
+      md5: f19b2787690b520f324cc988291d786b
+      size: 8681
+    - path: src/taed2_astra/modeling/evaluate.py
+      hash: md5
+      md5: 00409ef81499248b407f98fa45a5b4d3
+      size: 2637
+    - path: src/taed2_astra/modeling/registry.py
+      hash: md5
+      md5: 3698a6a30003be0e612c0ee5fd557525
+      size: 5300
+    params:
+      params.yaml:
+        benchmark:
+          models:
+          - logistic_regression
+          - hist_gradient_boosting
+          - tabpfn
+          - ensemble_soft
+          - ensemble_stacking
+          cv_folds: 3
+          max_rows:
+          latency_batch_size: 1000
+          rank_by: pr_auc
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        evaluate.threshold: 0.5
+        train:
+          random_state: 42
+          model: hist_gradient_boosting
+          candidates:
+            logistic_regression:
+              estimator: logistic_regression
+              C: 1.0
+              max_iter: 1000
+              class_weight: balanced
+            hist_gradient_boosting:
+              estimator: hist_gradient_boosting
+              learning_rate: 0.1
+              max_iter: 300
+              max_leaf_nodes: 31
+              min_samples_leaf: 100
+              class_weight: balanced
+            tabpfn:
+              estimator: tabpfn
+              n_estimators: 4
+              device: cpu
+              max_train_rows: 10000
+            ensemble_soft:
+              estimator: soft_voting
+              members:
+              - hist_gradient_boosting
+              - logistic_regression
+              weights:
+            ensemble_stacking:
+              estimator: stacking
+              members:
+              - hist_gradient_boosting
+              - logistic_regression
+              cv: 3
+    outs:
+    - path: metrics/benchmark.json
+      hash: md5
+      md5: a439802f8d5b2c726299136fe9f653ab
+      size: 4321
+  train:
+    cmd: python -X utf8 -m taed2_astra.modeling.train
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: affdf13112dbf301cec404d2abd5a210
+      size: 13834675
+    - path: reports/data_validation.json
+      hash: md5
+      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
+      size: 3754
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/registry.py
+      hash: md5
+      md5: 3698a6a30003be0e612c0ee5fd557525
+      size: 5300
+    - path: src/taed2_astra/modeling/train.py
+      hash: md5
+      md5: bc541ae90a07ef423bd78f7e35fe410c
+      size: 2321
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        train:
+          random_state: 42
+          model: hist_gradient_boosting
+          candidates:
+            logistic_regression:
+              estimator: logistic_regression
+              C: 1.0
+              max_iter: 1000
+              class_weight: balanced
+            hist_gradient_boosting:
+              estimator: hist_gradient_boosting
+              learning_rate: 0.1
+              max_iter: 300
+              max_leaf_nodes: 31
+              min_samples_leaf: 100
+              class_weight: balanced
+            tabpfn:
+              estimator: tabpfn
+              n_estimators: 4
+              device: cpu
+              max_train_rows: 10000
+            ensemble_soft:
+              estimator: soft_voting
+              members:
+              - hist_gradient_boosting
+              - logistic_regression
+              weights:
+            ensemble_stacking:
+              estimator: stacking
+              members:
+              - hist_gradient_boosting
+              - logistic_regression
+              cv: 3
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 36fc5a13ebad684577a7e02442c79a2e
+      size: 1110933
+  evaluate:
+    cmd: python -X utf8 -m taed2_astra.modeling.evaluate
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
+    - path: models/model.pkl
+      hash: md5
+      md5: 36fc5a13ebad684577a7e02442c79a2e
+      size: 1110933
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/evaluate.py
+      hash: md5
+      md5: 00409ef81499248b407f98fa45a5b4d3
+      size: 2637
+    - path: src/taed2_astra/modeling/predict.py
+      hash: md5
+      md5: 0d26a3483ebba3555172477bc644715a
+      size: 1259
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        evaluate:
+          threshold: 0.5
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: fd95046cd60e85eaae7e8830f8dac350
+      size: 290

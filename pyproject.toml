@@ -51,13 +51,30 @@ notebooks = [
     "matplotlib>=3.8",
     "seaborn>=0.13",
 ]
+# Optional: the Hugging Face-hosted tabular foundation model (pulls torch).
+# Install with `uv sync --group foundation`; the benchmark skips it otherwise.
+foundation = [
+    "tabpfn>=2.0",
+    "torch>=2.1",             # declared so [tool.uv.sources] can pin it to the CPU index
+]
 
 [project.scripts]
 # Thin CLI entry points so DVC stages and humans invoke the same code path.
-astra-prepare  = "taed2_astra.data.make_dataset:main"
-astra-validate = "taed2_astra.data.validate:main"
-astra-train    = "taed2_astra.modeling.train:main"
-astra-evaluate = "taed2_astra.modeling.evaluate:main"
+astra-prepare   = "taed2_astra.data.make_dataset:main"
+astra-validate  = "taed2_astra.data.validate:main"
+astra-benchmark = "taed2_astra.modeling.benchmark:main"
+astra-train     = "taed2_astra.modeling.train:main"
+astra-evaluate  = "taed2_astra.modeling.evaluate:main"
+
+# TabPFN pulls torch. The team has no GPU, so resolve torch from the CPU-only
+# index and skip the multi-gigabyte CUDA wheels the default index would lock.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [build-system]
 requires = ["hatchling"]

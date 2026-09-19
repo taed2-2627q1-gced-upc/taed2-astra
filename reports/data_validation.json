@@ -1,0 +1,151 @@
+{
+  "success": true,
+  "results": [
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_table_row_count_to_be_between",
+        "kwargs": {
+          "batch_id": "astra-processed",
+          "min_value": 1
+        },
+        "meta": {},
+        "severity": "critical"
+      },
+      "result": {
+        "observed_value": 1241213
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_to_exist",
+        "kwargs": {
+          "batch_id": "astra-processed",
+          "column": "SepsisLabel"
+        },
+        "meta": {},
+        "severity": "critical"
+      },
+      "result": {},
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_not_be_null",
+        "kwargs": {
+          "batch_id": "astra-processed",
+          "column": "SepsisLabel"
+        },
+        "meta": {},
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 1241213,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_distinct_values_to_be_in_set",
+        "kwargs": {
+          "batch_id": "astra-processed",
+          "column": "SepsisLabel",
+          "value_set": [
+            0,
+            1
+          ]
+        },
+        "meta": {},
+        "severity": "critical"
+      },
+      "result": {
+        "observed_value": null,
+        "unexpected_count": 0,
+        "partial_unexpected_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_not_be_null",
+        "kwargs": {
+          "batch_id": "astra-processed",
+          "column": "Patient_ID"
+        },
+        "meta": {},
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 1241213,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    }
+  ],
+  "suite_name": "processed-train",
+  "suite_parameters": {},
+  "statistics": {
+    "evaluated_expectations": 5,
+    "successful_expectations": 5,
+    "unsuccessful_expectations": 0,
+    "success_percent": 100.0
+  },
+  "meta": {
+    "great_expectations_version": "1.23.0",
+    "batch_spec": {
+      "batch_data": "PandasDataFrame"
+    },
+    "batch_markers": {
+      "ge_load_time": "20260919T193508.195267Z",
+      "pandas_data_fingerprint": "fbc5a1c7dab662d636577ca5d5f3bc7d"
+    },
+    "active_batch_definition": {
+      "datasource_name": "astra",
+      "data_connector_name": "fluent",
+      "data_asset_name": "processed",
+      "batch_identifiers": {
+        "dataframe": "<DATAFRAME>"
+      }
+    }
+  },
+  "id": null
+}
