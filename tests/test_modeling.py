@@ -1,5 +1,7 @@
 """Contract tests for the registry, features and metrics. They need no data on disk."""
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,6 +10,7 @@ from taed2_astra.config import load_params
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.evaluate import compute_metrics
 from taed2_astra.modeling.registry import build_model
+from taed2_astra.modeling.train import benchmark_best
 
 CANDIDATES = sorted(load_params()["train"]["candidates"])
 
@@ -55,6 +58,24 @@ def test_split_xy_never_leaks_label_or_group():
     x, y = split_xy(df, {"target": "label", "group": "pid"})
     assert list(x.columns) == ["f"]
     assert y.tolist() == [0, 1]
+
+
+def test_benchmark_best_ranks_by_the_requested_metric(tmp_path):
+    """The training run tags the benchmark's winner, which is not always the model that ships."""
+    path = tmp_path / "benchmark.json"
+    matrix = {
+        "shipped": {"pr_auc_mean": 0.05, "roc_auc_mean": 0.90},
+        "winner": {"pr_auc_mean": 0.09, "roc_auc_mean": 0.80},
+        "skipped": {"estimator": "tabpfn"},  # no scores: the benchmark skipped it
+    }
+    path.write_text(json.dumps(matrix), encoding="utf-8")
+    assert benchmark_best("pr_auc", path) == "winner"
+    assert benchmark_best("roc_auc", path) == "shipped"
+
+
+def test_benchmark_best_is_none_when_the_benchmark_has_not_run(tmp_path):
+    """Training must not fail just because metrics/benchmark.json is absent."""
+    assert benchmark_best("pr_auc", tmp_path / "missing.json") is None
 
 
 def test_compute_metrics_is_flat_and_numeric():
