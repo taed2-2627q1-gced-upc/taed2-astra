@@ -4,13 +4,16 @@ Which candidate ships is `train.model` in params.yaml; the benchmark stage is
 what informs that choice.
 """
 
+import json
 import pickle
+from pathlib import Path
 
 import mlflow
 import pandas as pd
 from codecarbon import EmissionsTracker
 
 from taed2_astra.config import (
+    BENCHMARK_PATH,
     EMISSIONS_DIR,
     MODEL_PATH,
     MODELS_DIR,
@@ -23,6 +26,17 @@ from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.registry import build_model
 
 log = get_logger(__name__)
+
+
+def benchmark_best(rank_by: str, path: Path = BENCHMARK_PATH) -> str | None:
+    """Return the candidate the benchmark ranked first, or None if it has not run or scored nothing."""
+    if not path.exists():
+        return None
+    with open(path, encoding="utf-8") as handle:
+        matrix = json.load(handle)
+    key = f"{rank_by}_mean"
+    ranked = {name: row[key] for name, row in matrix.items() if key in row}
+    return max(ranked, key=ranked.get) if ranked else None
 
 
 def main() -> None:
@@ -42,6 +56,20 @@ def main() -> None:
 
     with mlflow.start_run(run_name=f"train-{name}"):
         mlflow.set_tags({"stage": "train", "candidate": name, "dataset": dataset["name"]})
+
+        # The benchmark ranks candidates; params.yaml decides which one ships. Record both, or
+        # a reader comparing the benchmark's best_candidate tag to models/model.pkl sees a
+        # contradiction with no explanation attached.
+        best = benchmark_best(params["benchmark"]["rank_by"])
+        if best:
+            mlflow.set_tags(
+                {
+                    "benchmark_best": best,
+                    "overrides_benchmark": str(best != name).lower(),
+                    "selection_rationale": "docs/model_card.md#model-selection",
+                }
+            )
+
         mlflow.log_params(
             {"model": name, "random_state": train_params["random_state"], **train_params["candidates"][name]}
         )
