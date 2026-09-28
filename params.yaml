@@ -60,3 +60,11 @@ mlflow:
   experiment_name: taed2-astra
   # Override with MLFLOW_TRACKING_URI=sqlite:///mlflow.db to log runs locally.
   tracking_uri: https://dagshub.com/Santi-49/taed2-astra.mlflow
+
+model_card:
+  # Facts for the Hugging Face co2_eq_emissions metadata that CodeCarbon cannot measure.
+  # Everything measurable (emissions, energy, location, hardware, time) comes from emissions.csv.
+  training_type: pre-training           # trained from scratch, no pre-trained weights reused
+  optimization_techniques: >-
+    histogram-based gradient boosting (binned features); ensembles rejected because their
+    extra energy bought no meaningful PR-AUC gain

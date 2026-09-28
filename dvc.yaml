@@ -36,6 +36,7 @@ stages:
       - src/taed2_astra/modeling/registry.py
       - src/taed2_astra/modeling/evaluate.py
       - src/taed2_astra/features/build_features.py
+      - src/taed2_astra/energy.py
     params:
       - dataset
       - train
@@ -53,6 +54,7 @@ stages:
       - src/taed2_astra/modeling/train.py
       - src/taed2_astra/modeling/registry.py
       - src/taed2_astra/features/build_features.py
+      - src/taed2_astra/energy.py
     params:
       - dataset
       - train
@@ -67,9 +69,25 @@ stages:
       - src/taed2_astra/modeling/evaluate.py
       - src/taed2_astra/modeling/predict.py
       - src/taed2_astra/features/build_features.py
+      - src/taed2_astra/energy.py
     params:
       - dataset
       - evaluate
     metrics:
       - metrics/metrics.json:
           cache: false
+
+  # "Reporting energy in the model card": the shipped model's CodeCarbon row becomes the
+  # Hugging Face co2_eq_emissions metadata at the top of docs/model_card.md. model.pkl and
+  # metrics.json are deps so this stage runs after train and evaluate have written emissions.csv.
+  co2_report:
+    cmd: python -X utf8 -m taed2_astra.energy
+    deps:
+      - reports/emissions/emissions.csv
+      - models/model.pkl
+      - metrics/metrics.json
+      - data/processed/train.parquet
+      - src/taed2_astra/energy.py
+    params:
+      - train.model
+      - model_card

@@ -22,6 +22,7 @@ from taed2_astra.config import (
     get_tracking_uri,
     load_params,
 )
+from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.registry import build_model
 
@@ -81,9 +82,11 @@ def main() -> None:
         try:
             model.fit(x_train, y_train)
         finally:
-            emissions = tracker.stop()
+            tracker.stop()
 
-        mlflow.log_metric("emissions_kg_co2", emissions or 0.0)
+        energy, context = emissions_summary(tracker)
+        mlflow.log_metrics(energy)
+        mlflow.set_tags(context)
         # MLflow 3 defaults to skops, which rejects make_column_selector; cloudpickle matches models/model.pkl.
         mlflow.sklearn.log_model(
             model, name="model", serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE
@@ -91,7 +94,9 @@ def main() -> None:
 
     with open(MODEL_PATH, "wb") as handle:
         pickle.dump(model, handle)
-    log.info("Saved %s to %s (%.6f kg CO2eq)", name, MODEL_PATH, emissions or 0.0)
+    log.info(
+        "Saved %s to %s (%.6f kg CO2eq, %.6f kWh)", name, MODEL_PATH, energy["emissions_kg_co2"], energy["energy_kwh"]
+    )
 
 
 if __name__ == "__main__":

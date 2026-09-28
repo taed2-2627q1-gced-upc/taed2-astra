@@ -122,6 +122,10 @@ and is skipped otherwise.
 nested run per candidate (params, mean/std metrics, latency, model size,
 emissions, model artifact); training logs the shipped model the same way.
 
+**Sustainability figures** — run `uv run astra-plots` to regenerate the
+benchmark energy bar chart and duration-vs-energy scatter plot in
+`reports/figures/` from `reports/emissions/emissions.csv`.
+
 **API** — `make api`, then open <http://127.0.0.1:8000/docs>.
 
 **Data** — `dvc pull` / `dvc push`. Never `git add` anything under `data/` or
