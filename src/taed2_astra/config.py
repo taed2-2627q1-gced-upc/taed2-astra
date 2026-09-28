@@ -25,10 +25,12 @@ MODELS_DIR = PROJECT_ROOT / "models"
 METRICS_DIR = PROJECT_ROOT / "metrics"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 EMISSIONS_DIR = REPORTS_DIR / "emissions"
+EMISSIONS_PATH = EMISSIONS_DIR / "emissions.csv"  # CodeCarbon appends one row per tracked run
 FIGURES_DIR = REPORTS_DIR / "figures"
 VALIDATION_PATH = REPORTS_DIR / "data_validation.json"
 
 PARAMS_PATH = PROJECT_ROOT / "params.yaml"
+MODEL_CARD_PATH = PROJECT_ROOT / "docs" / "model_card.md"
 MODEL_PATH = MODELS_DIR / "model.pkl"
 
 # Artefacts written by the pipeline, in the order the stages produce them.

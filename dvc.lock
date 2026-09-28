@@ -76,18 +76,22 @@ stages:
       hash: md5
       md5: bc4772a5df2c45a6bd7dcb06a281d0a9
       size: 3754
+    - path: src/taed2_astra/energy.py
+      hash: md5
+      md5: b43e0f65ce7fbd75872c8316cd993ec1
+      size: 5599
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/benchmark.py
       hash: md5
-      md5: f19b2787690b520f324cc988291d786b
-      size: 8681
+      md5: 26159da564843304d3643b176641994d
+      size: 8765
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 00409ef81499248b407f98fa45a5b4d3
-      size: 2637
+      md5: 856efafe9a1f83cc68b214efd6afd863
+      size: 3234
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
       md5: 3698a6a30003be0e612c0ee5fd557525
@@ -153,8 +157,8 @@ stages:
     outs:
     - path: metrics/benchmark.json
       hash: md5
-      md5: a439802f8d5b2c726299136fe9f653ab
-      size: 4321
+      md5: 0c9cb6c12d8fea273587aa4e2202581d
+      size: 4748
   train:
     cmd: python -X utf8 -m taed2_astra.modeling.train
     deps:
@@ -166,6 +170,10 @@ stages:
       hash: md5
       md5: bc4772a5df2c45a6bd7dcb06a281d0a9
       size: 3754
+    - path: src/taed2_astra/energy.py
+      hash: md5
+      md5: b43e0f65ce7fbd75872c8316cd993ec1
+      size: 5599
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
@@ -176,8 +184,8 @@ stages:
       size: 5300
     - path: src/taed2_astra/modeling/train.py
       hash: md5
-      md5: bc541ae90a07ef423bd78f7e35fe410c
-      size: 2321
+      md5: b26d934a6b062d87384083bb10d15d48
+      size: 3599
     params:
       params.yaml:
         dataset:
@@ -227,7 +235,7 @@ stages:
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 36fc5a13ebad684577a7e02442c79a2e
+      md5: 4728f865299ee181f789f2f36b0a88ea
       size: 1110933
   evaluate:
     cmd: python -X utf8 -m taed2_astra.modeling.evaluate
@@ -238,16 +246,20 @@ stages:
       size: 3461516
     - path: models/model.pkl
       hash: md5
-      md5: 36fc5a13ebad684577a7e02442c79a2e
+      md5: 4728f865299ee181f789f2f36b0a88ea
       size: 1110933
+    - path: src/taed2_astra/energy.py
+      hash: md5
+      md5: b43e0f65ce7fbd75872c8316cd993ec1
+      size: 5599
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 00409ef81499248b407f98fa45a5b4d3
-      size: 2637
+      md5: 856efafe9a1f83cc68b214efd6afd863
+      size: 3234
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
       md5: 0d26a3483ebba3555172477bc644715a
@@ -270,5 +282,36 @@ stages:
     outs:
     - path: metrics/metrics.json
       hash: md5
-      md5: fd95046cd60e85eaae7e8830f8dac350
-      size: 290
+      md5: b717ba1a825feeec85cb92f27a392bad
+      size: 453
+  co2_report:
+    cmd: python -X utf8 -m taed2_astra.energy
+    deps:
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: affdf13112dbf301cec404d2abd5a210
+      size: 13834675
+    - path: metrics/metrics.json
+      hash: md5
+      md5: b717ba1a825feeec85cb92f27a392bad
+      size: 453
+    - path: models/model.pkl
+      hash: md5
+      md5: 4728f865299ee181f789f2f36b0a88ea
+      size: 1110933
+    - path: reports/emissions/emissions.csv
+      hash: md5
+      md5: 9425d9ca26c9549be5703ee474b574e9
+      size: 3395
+    - path: src/taed2_astra/energy.py
+      hash: md5
+      md5: b43e0f65ce7fbd75872c8316cd993ec1
+      size: 5599
+    params:
+      params.yaml:
+        model_card:
+          training_type: pre-training
+          optimization_techniques: histogram-based gradient boosting (binned
+            features); ensembles rejected because their extra energy bought no
+            meaningful PR-AUC gain
+        train.model: hist_gradient_boosting

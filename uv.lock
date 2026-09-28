@@ -4969,6 +4969,8 @@ dependencies = [
     { name = "dvc", extra = ["s3"] },
     { name = "fastapi" },
     { name = "great-expectations" },
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "mlflow" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -4999,8 +5001,6 @@ foundation = [
 ]
 notebooks = [
     { name = "jupyterlab" },
-    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "seaborn" },
 ]
 
@@ -5010,6 +5010,7 @@ requires-dist = [
     { name = "dvc", extras = ["s3"], specifier = ">=3.50" },
     { name = "fastapi", specifier = ">=0.110" },
     { name = "great-expectations", specifier = ">=1.0" },
+    { name = "matplotlib", specifier = ">=3.8" },
     { name = "mlflow", specifier = ">=2.22" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.1" },
@@ -5035,7 +5036,6 @@ foundation = [
 ]
 notebooks = [
     { name = "jupyterlab", specifier = ">=4.1" },
-    { name = "matplotlib", specifier = ">=3.8" },
     { name = "seaborn", specifier = ">=0.13" },
 ]
 

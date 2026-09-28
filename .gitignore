@@ -10,7 +10,6 @@
 /mlruns/
 /mlartifacts/
 /mlflow.db
-/reports/emissions/*.csv
 /reports/figures/*
 !/reports/figures/.gitkeep
 # metrics/ and reports/data_validation.json ARE committed: they are the
@@ -47,3 +46,4 @@ htmlcov/
 !.vscode/settings.json
 !.vscode/extensions.json
 !.vscode/launch.json
+.~lock.*#

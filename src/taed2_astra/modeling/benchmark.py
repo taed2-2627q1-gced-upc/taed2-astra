@@ -26,6 +26,7 @@ from taed2_astra.config import (
     get_tracking_uri,
     load_params,
 )
+from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.evaluate import compute_metrics
 from taed2_astra.modeling.registry import build_model, is_ensemble
@@ -120,9 +121,11 @@ def _run_candidate(name: str, params: dict, x: pd.DataFrame, y: pd.Series, folds
     try:
         summary, model = cross_validate_candidate(name, params, x, y, folds)
     finally:
-        emissions = tracker.stop() or 0.0
+        tracker.stop()
 
-    summary["emissions_kg_co2"] = float(emissions)
+    energy, context = emissions_summary(tracker)
+    summary.update(energy)
+    mlflow.set_tags(context)
     summary["latency_ms_per_1k_rows"] = measure_latency(model, x, bench["latency_batch_size"])
     summary["model_size_mb"] = len(pickle.dumps(model)) / 1e6
     mlflow.log_metrics(summary)

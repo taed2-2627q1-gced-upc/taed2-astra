@@ -5,6 +5,7 @@ import json
 import mlflow
 import numpy as np
 import pandas as pd
+from codecarbon import EmissionsTracker
 from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
@@ -16,6 +17,7 @@ from sklearn.metrics import (
 )
 
 from taed2_astra.config import (
+    EMISSIONS_DIR,
     METRICS_DIR,
     METRICS_PATH,
     TEST_PATH,
@@ -23,6 +25,7 @@ from taed2_astra.config import (
     get_tracking_uri,
     load_params,
 )
+from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.predict import load_model
 
@@ -55,8 +58,18 @@ def main() -> None:
 
     model = load_model()
     x_test, y_test = split_xy(pd.read_parquet(TEST_PATH), params["dataset"])
-    proba = model.predict_proba(x_test)[:, 1]
+    # Inference is the other half of an ML system's energy footprint, next to training.
+    EMISSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    tracker = EmissionsTracker(project_name=f"inference-{name}", output_dir=str(EMISSIONS_DIR), log_level="error")
+    tracker.start()
+    try:
+        proba = model.predict_proba(x_test)[:, 1]
+    finally:
+        tracker.stop()
+    energy, context = emissions_summary(tracker)
+
     metrics = compute_metrics(y_test, (proba >= threshold).astype(int), proba)
+    metrics.update({f"inference_{key}": value for key, value in energy.items()})
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     with open(METRICS_PATH, "w", encoding="utf-8") as handle:
@@ -70,6 +83,7 @@ def main() -> None:
         mlflow.log_param("threshold", threshold)
         mlflow.log_param("n_test_rows", len(x_test))
         mlflow.log_metrics(metrics)
+        mlflow.set_tags(context)
 
     log.info("Metrics: %s", metrics)
 
