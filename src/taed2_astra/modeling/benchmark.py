@@ -60,14 +60,18 @@ def cross_validate_candidate(
         fit_times.append(time.perf_counter() - start)
         proba = model.predict_proba(x.iloc[val_idx])[:, 1]
         per_fold.append(compute_metrics(y.iloc[val_idx], (proba >= threshold).astype(int), proba))
+    return _aggregate_folds(per_fold, fit_times), model
 
+
+def _aggregate_folds(per_fold: list[dict[str, float]], fit_times: list[float]) -> dict[str, float]:
+    """Collapse per-fold metrics into mean/std columns plus the mean fit time."""
     summary: dict[str, float] = {}
     for metric in per_fold[0]:
         values = [fold[metric] for fold in per_fold]
         summary[f"{metric}_mean"] = float(np.mean(values))
         summary[f"{metric}_std"] = float(np.std(values))
     summary["fit_time_s_mean"] = float(np.mean(fit_times))
-    return summary, model
+    return summary
 
 
 def measure_latency(model: BaseEstimator, x: pd.DataFrame, batch_size: int, repeats: int = 5) -> float:
