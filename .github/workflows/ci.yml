@@ -22,6 +22,7 @@ jobs:
         run: |
           uv run ruff check src tests
           uv run ruff format --check src tests
+          uv run pylint src tests --fail-under=9.5
 
       - name: Lint notebooks
         # Reports notebook smells without blocking the build on them.

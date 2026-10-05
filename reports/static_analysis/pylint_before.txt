@@ -1,0 +1,78 @@
+﻿************* Module taed2_astra.energy
+src\taed2_astra\energy.py:89:0: C0301: Line too long (110/100) (line-too-long)
+src\taed2_astra\energy.py:94:0: C0301: Line too long (116/100) (line-too-long)
+src\taed2_astra\energy.py:105:0: C0301: Line too long (114/100) (line-too-long)
+src\taed2_astra\energy.py:112:0: C0301: Line too long (108/100) (line-too-long)
+************* Module taed2_astra.data.make_dataset
+src\taed2_astra\data\make_dataset.py:28:0: C0301: Line too long (107/100) (line-too-long)
+src\taed2_astra\data\make_dataset.py:56:0: C0301: Line too long (114/100) (line-too-long)
+************* Module taed2_astra.data.validate
+src\taed2_astra\data\validate.py:28:0: C0301: Line too long (104/100) (line-too-long)
+src\taed2_astra\data\validate.py:31:0: C0301: Line too long (101/100) (line-too-long)
+src\taed2_astra\data\validate.py:55:0: C0301: Line too long (101/100) (line-too-long)
+************* Module taed2_astra.modeling.benchmark
+src\taed2_astra\modeling\benchmark.py:39:0: C0301: Line too long (103/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:51:0: C0301: Line too long (103/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:73:0: C0301: Line too long (103/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:91:0: C0301: Line too long (110/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:101:0: C0301: Line too long (109/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:106:0: C0301: Line too long (109/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:107:0: C0301: Line too long (103/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:110:0: C0301: Line too long (110/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:132:0: C0301: Line too long (107/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:133:0: C0301: Line too long (119/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:189:0: C0301: Line too long (116/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:190:0: C0301: Line too long (101/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:193:0: C0301: Line too long (111/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:198:0: C0301: Line too long (101/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:199:0: C0301: Line too long (110/100) (line-too-long)
+src\taed2_astra\modeling\benchmark.py:48:0: R0914: Too many local variables (16/15) (too-many-locals)
+************* Module taed2_astra.modeling.evaluate
+src\taed2_astra\modeling\evaluate.py:63:0: C0301: Line too long (114/100) (line-too-long)
+src\taed2_astra\modeling\evaluate.py:77:0: C0301: Line too long (101/100) (line-too-long)
+src\taed2_astra\modeling\evaluate.py:82:0: C0301: Line too long (103/100) (line-too-long)
+************* Module taed2_astra.modeling.registry
+src\taed2_astra\modeling\registry.py:29:0: C0301: Line too long (114/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:39:0: C0301: Line too long (117/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:67:0: C0301: Line too long (105/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:84:0: C0301: Line too long (107/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:87:0: C0301: Line too long (111/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:117:0: C0301: Line too long (115/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:122:0: C0301: Line too long (113/100) (line-too-long)
+src\taed2_astra\modeling\registry.py:35:18: C0103: Argument name "X" doesn't conform to snake_case naming style (invalid-name)
+src\taed2_astra\modeling\registry.py:44:22: C0103: Argument name "X" doesn't conform to snake_case naming style (invalid-name)
+src\taed2_astra\modeling\registry.py:49:28: C0103: Argument name "X" doesn't conform to snake_case naming style (invalid-name)
+src\taed2_astra\modeling\registry.py:40:8: W0201: Attribute 'estimator_' defined outside __init__ (attribute-defined-outside-init)
+src\taed2_astra\modeling\registry.py:41:8: W0201: Attribute 'classes_' defined outside __init__ (attribute-defined-outside-init)
+src\taed2_astra\modeling\registry.py:65:8: C0415: Import outside toplevel (tabpfn.TabPFNClassifier) (import-outside-toplevel)
+************* Module taed2_astra.modeling.train
+src\taed2_astra\modeling\train.py:33:0: C0301: Line too long (103/100) (line-too-long)
+src\taed2_astra\modeling\train.py:75:0: C0301: Line too long (109/100) (line-too-long)
+src\taed2_astra\modeling\train.py:80:0: C0301: Line too long (114/100) (line-too-long)
+src\taed2_astra\modeling\train.py:90:0: C0301: Line too long (111/100) (line-too-long)
+src\taed2_astra\modeling\train.py:92:0: C0301: Line too long (101/100) (line-too-long)
+src\taed2_astra\modeling\train.py:98:0: C0301: Line too long (118/100) (line-too-long)
+************* Module taed2_astra.visualization.plots
+src\taed2_astra\visualization\plots.py:10:0: C0301: Line too long (106/100) (line-too-long)
+src\taed2_astra\visualization\plots.py:26:0: C0301: Line too long (109/100) (line-too-long)
+src\taed2_astra\visualization\plots.py:28:0: C0301: Line too long (119/100) (line-too-long)
+src\taed2_astra\visualization\plots.py:31:0: C0301: Line too long (102/100) (line-too-long)
+src\taed2_astra\visualization\plots.py:32:0: C0301: Line too long (118/100) (line-too-long)
+src\taed2_astra\visualization\plots.py:47:0: C0301: Line too long (109/100) (line-too-long)
+************* Module test_energy
+tests\test_energy.py:46:0: C0301: Line too long (105/100) (line-too-long)
+tests\test_energy.py:55:0: C0301: Line too long (106/100) (line-too-long)
+tests\test_energy.py:78:0: C0301: Line too long (101/100) (line-too-long)
+tests\test_energy.py:84:0: C0301: Line too long (101/100) (line-too-long)
+tests\test_energy.py:88:0: C0301: Line too long (111/100) (line-too-long)
+************* Module test_modeling
+tests\test_modeling.py:36:0: C0301: Line too long (103/100) (line-too-long)
+************* Module test_plots
+tests\test_plots.py:29:70: W0621: Redefining name 'emissions' from outer scope (line 10) (redefined-outer-name)
+tests\test_plots.py:31:11: W0212: Access to a protected member _benchmark_runs of a client class (protected-access)
+tests\test_plots.py:38:40: W0621: Redefining name 'emissions' from outer scope (line 10) (redefined-outer-name)
+tests\test_plots.py:51:50: W0621: Redefining name 'emissions' from outer scope (line 10) (redefined-outer-name)
+tests\test_plots.py:56:8: W0212: Access to a protected member _benchmark_runs of a client class (protected-access)
+
+-----------------------------------
+Your code has been rated at 9.08/10
