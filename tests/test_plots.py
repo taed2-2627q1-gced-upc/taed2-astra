@@ -1,5 +1,9 @@
 """Sustainability plots from CodeCarbon emissions data."""
 
+# redefined-outer-name: pylint false positive on pytest fixtures injected as arguments.
+# protected-access: _benchmark_runs is a private helper tested on purpose.
+# pylint: disable=redefined-outer-name,protected-access
+
 import pandas as pd
 import pytest
 

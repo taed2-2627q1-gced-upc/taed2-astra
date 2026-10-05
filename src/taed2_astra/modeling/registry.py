@@ -37,8 +37,10 @@ class SubsampleClassifier(ClassifierMixin, BaseEstimator):
         X, y = np.asarray(X), np.asarray(y)
         if len(y) > self.max_rows:
             X, _, y, _ = train_test_split(X, y, train_size=self.max_rows, stratify=y, random_state=self.random_state)
-        self.estimator_ = clone(self.estimator).fit(X, y)
-        self.classes_ = self.estimator_.classes_
+        # scikit-learn convention: fitted attributes (trailing "_") are created in fit(),
+        # which is how check_is_fitted() tells a fitted estimator from an unfitted one.
+        self.estimator_ = clone(self.estimator).fit(X, y)  # pylint: disable=attribute-defined-outside-init
+        self.classes_ = self.estimator_.classes_  # pylint: disable=attribute-defined-outside-init
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -62,7 +64,8 @@ def _hist_gradient_boosting(hyperparams: dict, random_state: int) -> BaseEstimat
 
 def _tabpfn(hyperparams: dict, random_state: int) -> BaseEstimator:
     try:
-        from tabpfn import TabPFNClassifier  # noqa: PLC0415 - optional, heavy dependency
+        # Optional, heavy dependency: imported lazily so the project runs without it.
+        from tabpfn import TabPFNClassifier  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
     except ImportError as error:
         raise ImportError("TabPFN is optional. Install it with `uv sync --group foundation`.") from error
     hyperparams = dict(hyperparams)
