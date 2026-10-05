@@ -1,4 +1,4 @@
-.PHONY: install lint format test repro api clean
+.PHONY: install lint format pylint lint-nb test repro api clean
 
 install:      ## Create the environment and install the project
 	uv sync
@@ -11,6 +11,13 @@ format:       ## Auto-fix lint errors and formatting
 lint:         ## Run the checks CI runs
 	uv run ruff check src tests
 	uv run ruff format --check src tests
+
+pylint:       ## Static analysis of the source code and tests
+	uv run pylint src tests
+
+lint-nb:      ## Notebook and repository QA (run `make test` first so .coverage exists)
+	uv run pynblint notebooks
+	uv run pynblint .
 
 test:         ## Run the test suite
 	uv run pytest

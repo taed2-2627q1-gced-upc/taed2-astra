@@ -44,7 +44,9 @@ dev = [
     "pytest>=8.1",
     "pytest-cov>=5.0",
     "httpx>=0.27",            # FastAPI TestClient transport
-    "pynblint>=0.1.3",
+    "pylint>=4.1.2",          # static analysis: design, complexity and a global score
+    "pynblint>=0.1.3",        # notebook + repository QA
+    "click<8.2",
     "pre-commit>=3.7",
 ]
 notebooks = [
@@ -86,7 +88,7 @@ build-backend = "hatchling.build"
 packages = ["src/taed2_astra"]
 
 # ---------------------------------------------------------------------------
-# Tooling - ruff replaces black, isort, flake8 and pylint
+# Tooling - ruff (fast, runs on every commit) + pylint (deeper static analysis)
 # ---------------------------------------------------------------------------
 
 [tool.ruff]
@@ -123,6 +125,21 @@ known-first-party = ["taed2_astra"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+# Pylint complements ruff with semantic checks (design limits, class attributes,
+# name resolution across modules) and a global score we track over time.
+[tool.pylint.main]
+source-roots = ["src"]
+py-version = "3.10"
+
+[tool.pylint.format]
+max-line-length = 120          # same limit as ruff: one style for the whole repo
+
+[tool.pylint.basic]
+good-names = ["X", "y", "i", "j", "df", "_"]   # ML conventions (scikit-learn API)
+
+[tool.pylint.design]
+max-locals = 15                # keep the default: refactor instead of raising it
 
 [tool.pytest.ini_options]
 minversion = "8.0"
