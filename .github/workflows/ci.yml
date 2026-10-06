@@ -1,32 +1,155 @@
+# Quality gates for every pull request into main.
+#
+# Each job's `name` is what GitHub shows as a status check, and what the ruleset in
+# .github/rulesets/main.json marks as required. Rename a job and you must update the
+# ruleset too, or the pull request waits forever for a check that never reports.
+#
+# Every gate runs through `make`, so a contributor reproduces CI with the same command.
+
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, edited, synchronize, reopened]   # `edited`: re-check the title when it is fixed
+
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to the same branch makes the previous run obsolete.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  quality:
+  hygiene:
+    name: Repository hygiene
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync
+      - name: Lockfile matches pyproject.toml
+        # Catches a dependency added to pyproject.toml without `uv sync`: everyone else would get a different env.
+        run: uv lock --check
 
-      - name: Lint
+      - name: Pre-commit hooks on every file
+        # Whitespace, YAML syntax and the 900 kB size limit that keeps data out of Git.
+        run: uvx pre-commit run --all-files --show-diff-on-failure
+
+      - name: No data or models committed to Git
         run: |
-          uv run ruff check src tests
-          uv run ruff format --check src tests
-          uv run pylint src tests --fail-under=9.5
+          leaked=$(git ls-files data models | grep -vE '(\.dvc|\.gitignore|\.gitkeep)$' || true)
+          if [ -n "$leaked" ]; then
+            echo "::error::These files belong in DVC, not Git:"; echo "$leaked"; exit 1
+          fi
 
-      - name: Lint notebooks
-        # Reports notebook smells without blocking the build on them.
-        run: uv run pynblint notebooks || true
+  lint:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: ruff (lint + format) and pylint (score >= 9.5)
+        run: make lint
 
-      - name: Test
-        run: uv run pytest
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: Unit, contract and data-validation tests (coverage gate in pyproject.toml)
+        run: uv run pytest -m "not integration" --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            .coverage
+            coverage.xml
+          include-hidden-files: true
+          retention-days: 7
+
+  notebooks:
+    name: Notebook QA
+    needs: test   # Pynblint's repository checks read the .coverage file the tests produce
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+      - name: Pynblint on notebooks and repository, failing on any lint
+        run: make lint-nb
+
+  pr-title:
+    name: Conventional PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Title follows Conventional Commits
+        # The PR title becomes the merge commit subject, so it obeys the same convention as commits.
+        env:
+          TITLE: ${{ github.event.pull_request.title }}   # via env, never inlined: titles are user input
+        run: |
+          pattern='^(feat|fix|docs|refactor|test|chore|ci|data)(\([a-z0-9-]+\))?!?: [a-z].+[^.]$'
+          if ! printf '%s' "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title '$TITLE' must look like 'feat: add training stage' (see AGENTS.md#git)."
+            exit 1
+          fi
+
+  data-and-model:
+    name: Data validation and model gates
+    # Needs read access to the DagsHub remote. Add a DAGSHUB_TOKEN repository secret to enable it;
+    # without one it reports "skipped", which branch protection treats as passing.
+    runs-on: ubuntu-latest
+    env:
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.DAGSHUB_TOKEN != ''
+      - uses: astral-sh/setup-uv@v5
+        if: env.DAGSHUB_TOKEN != ''
+        with:
+          enable-cache: true
+      - run: uv sync
+        if: env.DAGSHUB_TOKEN != ''
+
+      - name: Pull data and the shipped model
+        # Everything, raw archive included: `dvc status` below hashes every stage's dependencies.
+        if: env.DAGSHUB_TOKEN != ''
+        run: |
+          uv run dvc remote modify --local dagshub access_key_id "$DAGSHUB_TOKEN"
+          uv run dvc remote modify --local dagshub secret_access_key "$DAGSHUB_TOKEN"
+          uv run dvc pull
+
+      - name: Great Expectations suite on both splits
+        if: env.DAGSHUB_TOKEN != ''
+        run: uv run python -m taed2_astra.data.validate
+
+      - name: Model release gates (performance, slices, behaviour)
+        if: env.DAGSHUB_TOKEN != ''
+        run: uv run pytest -m integration --no-cov
+
+      - name: Pipeline outputs match the code that produced them
+        # A stale dvc.lock means the committed metrics describe a model the current code would not build.
+        if: env.DAGSHUB_TOKEN != ''
+        run: |
+          uv run dvc status --quiet || {
+            uv run dvc status
+            echo "::error::dvc.lock is out of date. Run 'dvc repro', then commit dvc.lock and 'dvc push'."
+            exit 1
+          }

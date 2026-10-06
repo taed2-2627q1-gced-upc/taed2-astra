@@ -1,151 +1,1320 @@
 {
-  "success": true,
-  "results": [
-    {
-      "success": true,
-      "expectation_config": {
-        "type": "expect_table_row_count_to_be_between",
-        "kwargs": {
-          "batch_id": "astra-processed",
-          "min_value": 1
+  "splits": {
+    "train": {
+      "rows": 1241213,
+      "expectations": [
+        {
+          "expectation": "expect_table_row_count_to_be_between",
+          "column": null,
+          "severity": "critical",
+          "success": true,
+          "observed_value": 1241213
         },
-        "meta": {},
-        "severity": "critical"
-      },
-      "result": {
-        "observed_value": 1241213
-      },
-      "meta": {},
-      "exception_info": {
-        "raised_exception": false,
-        "exception_traceback": null,
-        "exception_message": null
-      }
-    },
-    {
-      "success": true,
-      "expectation_config": {
-        "type": "expect_column_to_exist",
-        "kwargs": {
-          "batch_id": "astra-processed",
-          "column": "SepsisLabel"
+        {
+          "expectation": "expect_table_columns_to_match_set",
+          "column": null,
+          "severity": "critical",
+          "success": true
         },
-        "meta": {},
-        "severity": "critical"
-      },
-      "result": {},
-      "meta": {},
-      "exception_info": {
-        "raised_exception": false,
-        "exception_traceback": null,
-        "exception_message": null
-      }
-    },
-    {
-      "success": true,
-      "expectation_config": {
-        "type": "expect_column_values_to_not_be_null",
-        "kwargs": {
-          "batch_id": "astra-processed",
-          "column": "SepsisLabel"
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hour",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
         },
-        "meta": {},
-        "severity": "critical"
-      },
-      "result": {
-        "element_count": 1241213,
-        "unexpected_count": 0,
-        "unexpected_percent": 0.0,
-        "partial_unexpected_list": [],
-        "partial_unexpected_counts": [],
-        "partial_unexpected_index_list": []
-      },
-      "meta": {},
-      "exception_info": {
-        "raised_exception": false,
-        "exception_traceback": null,
-        "exception_message": null
-      }
-    },
-    {
-      "success": true,
-      "expectation_config": {
-        "type": "expect_column_distinct_values_to_be_in_set",
-        "kwargs": {
-          "batch_id": "astra-processed",
-          "column": "SepsisLabel",
-          "value_set": [
-            0,
-            1
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Hour",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hour",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HR",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HR",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "O2Sat",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "O2Sat",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Temp",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Temp",
+          "severity": "warning",
+          "success": true,
+          "unexpected_count": 2,
+          "unexpected_percent": 0.0005,
+          "examples": [
+            50.0,
+            50.0
           ]
         },
-        "meta": {},
-        "severity": "critical"
-      },
-      "result": {
-        "observed_value": null,
-        "unexpected_count": 0,
-        "partial_unexpected_list": []
-      },
-      "meta": {},
-      "exception_info": {
-        "raised_exception": false,
-        "exception_traceback": null,
-        "exception_message": null
-      }
-    },
-    {
-      "success": true,
-      "expectation_config": {
-        "type": "expect_column_values_to_not_be_null",
-        "kwargs": {
-          "batch_id": "astra-processed",
-          "column": "Patient_ID"
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SBP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
         },
-        "meta": {},
-        "severity": "critical"
-      },
-      "result": {
-        "element_count": 1241213,
-        "unexpected_count": 0,
-        "unexpected_percent": 0.0,
-        "partial_unexpected_list": [],
-        "partial_unexpected_counts": [],
-        "partial_unexpected_index_list": []
-      },
-      "meta": {},
-      "exception_info": {
-        "raised_exception": false,
-        "exception_traceback": null,
-        "exception_message": null
-      }
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "SBP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "MAP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "MAP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "DBP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "DBP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Resp",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Resp",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "EtCO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "EtCO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "BaseExcess",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "BaseExcess",
+          "severity": "warning",
+          "success": true,
+          "unexpected_count": 3,
+          "unexpected_percent": 0.0044,
+          "examples": [
+            44.0,
+            100.0,
+            49.5
+          ]
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HCO3",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HCO3",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "FiO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "FiO2",
+          "severity": "warning",
+          "success": false,
+          "unexpected_count": 315,
+          "unexpected_percent": 0.3036,
+          "examples": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.04
+          ]
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "pH",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "pH",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "PaCO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "PaCO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SaO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "SaO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "AST",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "AST",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "BUN",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "BUN",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Alkalinephos",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Alkalinephos",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Calcium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Calcium",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Chloride",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Chloride",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Creatinine",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Creatinine",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Bilirubin_direct",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Bilirubin_direct",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Glucose",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Glucose",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Lactate",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Lactate",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Magnesium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Magnesium",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Phosphate",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Phosphate",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Potassium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Potassium",
+          "severity": "warning",
+          "success": true,
+          "unexpected_count": 3,
+          "unexpected_percent": 0.0026,
+          "examples": [
+            13.0,
+            27.5,
+            15.8
+          ]
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Bilirubin_total",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Bilirubin_total",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "TroponinI",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "TroponinI",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hct",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hct",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hgb",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hgb",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "PTT",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "PTT",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "WBC",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "WBC",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Fibrinogen",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Fibrinogen",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Platelets",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Platelets",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Age",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Age",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Age",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Gender",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Unit1",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Unit1",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Unit1",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Unit2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Unit2",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Unit2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HospAdmTime",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HospAdmTime",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "ICULOS",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "ICULOS",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "ICULOS",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_distinct_values_to_be_in_set",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": null
+        },
+        {
+          "expectation": "expect_column_mean_to_be_between",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": 0.01826358570205114
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Patient_ID",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Patient_ID",
+          "severity": "critical",
+          "success": true
+        }
+      ]
+    },
+    "test": {
+      "rows": 310997,
+      "expectations": [
+        {
+          "expectation": "expect_table_row_count_to_be_between",
+          "column": null,
+          "severity": "critical",
+          "success": true,
+          "observed_value": 310997
+        },
+        {
+          "expectation": "expect_table_columns_to_match_set",
+          "column": null,
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hour",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Hour",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hour",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HR",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HR",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "O2Sat",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "O2Sat",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Temp",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Temp",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SBP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "SBP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "MAP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "MAP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "DBP",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "DBP",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Resp",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Resp",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "EtCO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "EtCO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "BaseExcess",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "BaseExcess",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HCO3",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HCO3",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "FiO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "FiO2",
+          "severity": "warning",
+          "success": false,
+          "unexpected_count": 80,
+          "unexpected_percent": 0.3124,
+          "examples": [
+            0.03,
+            0.03,
+            0.2,
+            0.2,
+            0.04
+          ]
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "pH",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "pH",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "PaCO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "PaCO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SaO2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "SaO2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "AST",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "AST",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "BUN",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "BUN",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Alkalinephos",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Alkalinephos",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Calcium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Calcium",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Chloride",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Chloride",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Creatinine",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Creatinine",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Bilirubin_direct",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Bilirubin_direct",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Glucose",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Glucose",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Lactate",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Lactate",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Magnesium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Magnesium",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Phosphate",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Phosphate",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Potassium",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Potassium",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Bilirubin_total",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Bilirubin_total",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "TroponinI",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "TroponinI",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hct",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hct",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Hgb",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Hgb",
+          "severity": "warning",
+          "success": true,
+          "unexpected_count": 1,
+          "unexpected_percent": 0.0044,
+          "examples": [
+            32.0
+          ]
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "PTT",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "PTT",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "WBC",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "WBC",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Fibrinogen",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Fibrinogen",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Platelets",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Platelets",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Age",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Age",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Age",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Gender",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Gender",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Unit1",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Unit1",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Unit1",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Unit2",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_set",
+          "column": "Unit2",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "Unit2",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "HospAdmTime",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "float64"
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "HospAdmTime",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "ICULOS",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "ICULOS",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_between",
+          "column": "ICULOS",
+          "severity": "warning",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true
+        },
+        {
+          "expectation": "expect_column_distinct_values_to_be_in_set",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": null
+        },
+        {
+          "expectation": "expect_column_mean_to_be_between",
+          "column": "SepsisLabel",
+          "severity": "critical",
+          "success": true,
+          "observed_value": 0.016871545384682166
+        },
+        {
+          "expectation": "expect_column_values_to_be_in_type_list",
+          "column": "Patient_ID",
+          "severity": "critical",
+          "success": true,
+          "observed_value": "int64"
+        },
+        {
+          "expectation": "expect_column_values_to_not_be_null",
+          "column": "Patient_ID",
+          "severity": "critical",
+          "success": true
+        }
+      ]
     }
+  },
+  "critical_failures": [],
+  "warnings": [
+    "train: expect_column_values_to_be_between(FiO2)",
+    "test: expect_column_values_to_be_between(FiO2)"
   ],
-  "suite_name": "processed-train",
-  "suite_parameters": {},
-  "statistics": {
-    "evaluated_expectations": 5,
-    "successful_expectations": 5,
-    "unsuccessful_expectations": 0,
-    "success_percent": 100.0
-  },
-  "meta": {
-    "great_expectations_version": "1.23.0",
-    "batch_spec": {
-      "batch_data": "PandasDataFrame"
-    },
-    "batch_markers": {
-      "ge_load_time": "20260919T193508.195267Z",
-      "pandas_data_fingerprint": "fbc5a1c7dab662d636577ca5d5f3bc7d"
-    },
-    "active_batch_definition": {
-      "datasource_name": "astra",
-      "data_connector_name": "fluent",
-      "data_asset_name": "processed",
-      "batch_identifiers": {
-        "dataframe": "<DATAFRAME>"
-      }
-    }
-  },
-  "id": null
+  "group_overlap": 0,
+  "success": true
 }
