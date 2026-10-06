@@ -102,6 +102,37 @@ Check `/model`: its `model_md5` must match `models/model.pkl` in `dvc.lock` on `
 | Restart | `sudo systemctl restart astra-api` |
 | Stop / start | `sudo systemctl stop astra-api` / `sudo systemctl start astra-api` |
 | Run in the foreground to debug | `sudo systemctl stop astra-api && make serve` |
+| Who called the API today | `tail -f logs/access.log` |
+
+### Access log
+
+The service log (`make logs`) records what happened. `logs/access.log` records who asked,
+one line per request:
+
+```
+2026-10-06 23:13:00  203.0.113.7         ES  GET    /health        -> 200     2.1 ms  curl/8.4.0
+2026-10-06 23:13:01  2a0c:5a80:1234::1   NL  POST   /predict       -> 200   115.8 ms  python-requests/2.32
+```
+
+Columns: time (server clock), client IP, country, method, path, status, latency, user agent.
+
+- **IP.** The API is reached through the Cloudflare tunnel, so every connection comes
+  from the local `cloudflared`. The real caller is in Cloudflare's `CF-Connecting-IP`
+  header. The header is trusted because uvicorn listens only on localhost. Run locally,
+  without Cloudflare, the column shows the direct peer instead (`127.0.0.1`).
+- **Country** comes from `CF-IPCountry`, which Cloudflare sends only when *IP Geolocation*
+  is on (dashboard → Network). Otherwise the column shows `-`.
+- **Rotation.** The file rotates at midnight to `access.log.YYYY-MM-DD`, and files older
+  than `params.yaml: api.access_log_days` (30) are deleted.
+- **Privacy.** IP addresses are personal data under GDPR, which is why they stay out of
+  the service log, out of Git (`/logs/` is in `.gitignore`) and are deleted after 30 days.
+
+Handy queries:
+
+```bash
+awk '{print $3}' logs/access.log* | sort | uniq -c | sort -rn | head   # top callers
+grep -h " -> 422" logs/access.log*                                              # rejected requests
+```
 
 ## Troubleshooting
 

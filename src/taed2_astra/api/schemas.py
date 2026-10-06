@@ -31,18 +31,48 @@ def build_record_model(validation: dict, limits: dict, example: dict | None = No
         else:
             fields[name] = (kind | None, Field(None, **bounds))
     # strict: a string such as "98" is a client bug, not a heart rate to coerce.
-    config = ConfigDict(extra="forbid", strict=True, json_schema_extra={"examples": [example]} if example else None)
+    # allow_inf_nan: Python's JSON parser accepts NaN and Infinity, which are not measurements.
+    config = ConfigDict(
+        extra="forbid",
+        strict=True,
+        allow_inf_nan=False,
+        json_schema_extra={"examples": [example]} if example else None,
+    )
     return create_model("PatientHour", __config__=config, **fields)
 
 
-def outside_training_range(record: dict, ranges: dict) -> list[str]:
-    """Return one warning per measurement that lies outside the range the model was trained on."""
+def outside_validated_range(record: dict, ranges: dict) -> list[str]:
+    """Return one warning per measurement outside the range the training data was checked against.
+
+    Inside the range does not mean seen in training: the ranges are wide plausibility
+    bounds, so the warning flags values that are rare in training, not every unseen one.
+    """
     return [
-        f"{name}={value} is outside the training range [{ranges[name][0]}, {ranges[name][1]}]; "
-        "the risk is extrapolated and less reliable"
+        f"{name}={value} is outside the validated range [{ranges[name][0]}, {ranges[name][1]}]; "
+        "such values are rare in the training data, so the risk is less reliable"
         for name, value in record.items()
         if not ranges[name][0] <= value <= ranges[name][1]
     ]
+
+
+def inconsistencies(record: dict, ordered: list, one_hot: list) -> list[str]:
+    """Return one warning per relation between fields that the record breaks.
+
+    Each field is checked on its own by the schema; this catches combinations that no
+    real patient has, such as a diastolic pressure above the systolic. A rule is only
+    checked when every field in it was sent.
+    """
+    warnings = [
+        f"{low}={record[low]} is above {high}={record[high]}; this is usually a charting error"
+        for low, high in ordered
+        if low in record and high in record and record[low] > record[high]
+    ]
+    warnings += [
+        f"exactly one of {', '.join(group)} should be 1; this is usually a charting error"
+        for group in one_hot
+        if all(name in record for name in group) and sum(record[name] for name in group) != 1
+    ]
+    return warnings
 
 
 def build_openapi_examples(examples: dict) -> dict:
@@ -68,10 +98,14 @@ DEFAULT_EXAMPLE: dict = next(iter(_PARAMS["api"]["examples"].values()))["record"
 OPENAPI_EXAMPLES = build_openapi_examples(_PARAMS["api"]["examples"])
 PatientHour = build_record_model(_PARAMS["validation"], _PARAMS["api"]["limits"], DEFAULT_EXAMPLE)
 MAX_BATCH_SIZE: int = _PARAMS["api"]["max_batch_size"]
+MAX_ERRORS: int = _PARAMS["api"]["max_errors"]
 
 
 class PredictionRequest(BaseModel):
     """A batch of patient-hours to score."""
+
+    # A misspelled "record" key must fail loudly, as a misspelled field inside a record does.
+    model_config = ConfigDict(extra="forbid")
 
     records: list[PatientHour] = Field(  # type: ignore[valid-type]
         ...,
@@ -88,7 +122,7 @@ class Prediction(BaseModel):
     prediction: int = Field(..., description="1 if risk_probability >= threshold, else 0.")
     warnings: list[str] = Field(
         default_factory=list,
-        description="Measurements outside the range seen in training. Empty when the record is fully in range.",
+        description=("Values that are rare in training, or fields that contradict each other. Empty for most records."),
     )
 
 

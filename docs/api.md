@@ -44,7 +44,7 @@ Response (illustrative values): one prediction per record, **in request order**,
 |-------|---------|
 | `risk_probability` | Estimated probability that the patient is in the sepsis window, in [0, 1] |
 | `prediction` | `1` if `risk_probability >= threshold`, else `0` |
-| `warnings` | Measurements outside the range seen in training (see below). Empty for most records |
+| `warnings` | Values rare in training, or fields that contradict each other (see below). Empty for most records |
 | `threshold` | `params.yaml: evaluate.threshold`, the same one used for the reported metrics |
 | `model_md5` | MD5 of the served file. It matches `models/model.pkl` in `dvc.lock`, so every prediction can be traced back to a commit |
 
@@ -133,15 +133,15 @@ both checks at once.
 | Required fields, charted every hour | `validation.complete` | `Hour`, `Age`, `Gender`, `ICULOS` |
 | Every other field is optional; omit it if not measured. The model imputes it | — | no `Lactate` this hour |
 | Each value must be physically possible in the expected unit | `api.limits` | `Temp` in [10, 47] °C, `FiO2` in [0.21, 1.0] |
-| Binary fields are integers 0 or 1 | `validation.binary` | `Gender`, `Unit1`, `Unit2` |
-| Numbers must be JSON numbers, not strings | — | `98`, not `"98"` |
-| Unknown fields are rejected | — | `hr`, `Patient_ID` |
+| Binary fields are integers 0 or 1, written without a decimal point | `validation.binary` | `"Gender": 1`, not `1.0` |
+| Numbers must be finite JSON numbers, not strings | — | `98`, not `"98"`, `NaN` or `Infinity` |
+| Unknown fields are rejected, in a record and next to `records` | — | `hr`, `Patient_ID` |
 
 Why reject these? Each would otherwise be scored silently as a different patient. A
 misspelled `hr` would be dropped and imputed as "no heart rate measured".
 `Temp: 98.6` (Fahrenheit) or `FiO2: 40` (a percentage) would reach the model as an absurd value.
 
-### Hard limits vs. training range
+### Hard limits vs. validated range
 
 Two sets of bounds per feature, both in `params.yaml`:
 
@@ -155,20 +155,46 @@ extreme but real value is never refused. A heart rate of 19 is still scored:
 
 ```json
 {"risk_probability": 0.19, "prediction": 0,
- "warnings": ["HR=19.0 is outside the training range [20, 300]; the risk is extrapolated and less reliable"]}
+ "warnings": ["HR=19.0 is outside the validated range [20, 300]; such values are rare in the training data, so the risk is less reliable"]}
 ```
 
-Treat such a risk with care. The model never saw these values. Gradient boosting scores
+Treat such a risk with care. The model rarely or never saw these values. Gradient boosting scores
 everything beyond the training range as if it were the most extreme training value, so
 HR 19 and HR 4 get the same risk. A test (`test_hard_limits_cover_every_training_value`)
 guarantees the limits never reject a value the model was trained on.
+
+The reverse does not hold: `validation.ranges` are wide plausibility bounds, so a value
+inside them may still be unseen. `Age` is validated against [0, 120], but the youngest
+training patient is 14. An `Age` of 0 gets no warning, although the model has never
+seen a child.
+
+### Fields that contradict each other
+
+Each field is checked on its own by the schema, so a record can pass every bound and
+still describe no real patient. `params.yaml: api` lists the relations between fields
+that every training row respects, bar rare charting errors:
+
+| Rule | `params.yaml` | Broken in training rows |
+|------|---------------|-------------------------|
+| `DBP <= MAP <= SBP`, `DBP <= SBP` | `api.ordered` | 0.01–0.64 % |
+| `Bilirubin_direct <= Bilirubin_total` | `api.ordered` | 0.14 % |
+| `Hour <= ICULOS` | `api.ordered` | 0 % |
+| Exactly one of `Unit1`, `Unit2` is 1 | `api.one_hot` | 0 % |
+
+A rule is checked only when every field in it is sent. A broken rule is scored, with a
+warning such as `DBP=140 is above SBP=60; this is usually a charting error`, for the same
+reason as an extreme value: the record still belongs to a real patient who needs a risk.
 
 ## Errors
 
 | Status | When | Body |
 |--------|------|------|
-| `422` | The request breaks the input contract, or the batch is empty or too large | `detail[]` with the offending field in `loc` and the reason in `msg` |
+| `422` | The request breaks the input contract, or the batch is empty or too large | `detail[]` with the offending field in `loc` and the reason in `msg`; at most `api.max_errors` (20) entries |
 | `500` | Unexpected server error (see the logs) | — |
+
+A `422` lists only the first problems, and does not echo back a whole rejected record or a
+string longer than 100 characters, so a malformed request cannot produce a huge answer.
+`NaN` and `Infinity`, which Python's JSON parser accepts, are rejected like any other bad value.
 
 The server never answers without a model. If `models/model.pkl` is missing, or was
 fitted on a different feature set than `params.yaml`, the server **refuses to start**.

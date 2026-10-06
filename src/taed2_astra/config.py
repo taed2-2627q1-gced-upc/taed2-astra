@@ -28,6 +28,8 @@ EMISSIONS_DIR = REPORTS_DIR / "emissions"
 EMISSIONS_PATH = EMISSIONS_DIR / "emissions.csv"  # CodeCarbon appends one row per tracked run
 FIGURES_DIR = REPORTS_DIR / "figures"
 VALIDATION_PATH = REPORTS_DIR / "data_validation.json"
+# Who called the API, one file per day. Holds client IPs, so it is never committed.
+ACCESS_LOG_PATH = PROJECT_ROOT / "logs" / "access.log"
 
 PARAMS_PATH = PROJECT_ROOT / "params.yaml"
 MODEL_CARD_PATH = PROJECT_ROOT / "docs" / "model_card.md"

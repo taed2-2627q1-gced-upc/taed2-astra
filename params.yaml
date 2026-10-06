@@ -127,11 +127,14 @@ model_quality:
 # Serving contract. Field types and required fields come from `validation` above.
 api:
   max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 2 GB RAM)
+  access_log_days: 30               # days of logs/access.log kept; client IPs are personal data (GDPR)
+  max_errors: 20                     # a 422 lists at most this many problems: a 0.6 MB request must not get a 6 MB answer
   # Hard limits per feature: /predict rejects (422) only values that cannot be a real
   # measurement in the expected unit. They are deliberately wider than validation.ranges,
   # because the sickest patients are exactly the ones an early-warning model must score:
   # a value inside these limits but outside validation.ranges is scored and returned with
-  # a warning, since the model never saw it during training. Keys must match validation.ranges.
+  # a warning: the training data was checked against those ranges, so such values are rare in it.
+  # Keys must match validation.ranges.
   limits:
     Hour: [0, 10000]                 # hours since ICU admission; stays can last months
     HR: [0, 350]                     # 0 = asystole; extreme bradycardia must still be scored
@@ -174,6 +177,17 @@ api:
     Unit2: [0, 1]
     HospAdmTime: [-100000, 100]      # hours from hospital to ICU admission
     ICULOS: [1, 10000]
+  # Relations between fields, checked whenever every field in a rule is sent. A broken one is
+  # scored with a warning, not rejected: it is almost always a charting error, and the record
+  # still describes a real patient. Share of train.parquet rows that break each rule is noted.
+  ordered:                           # [low, high]: low must not exceed high
+    - [DBP, MAP]                     # 0.64 %
+    - [MAP, SBP]                     # 0.09 %
+    - [DBP, SBP]                     # 0.01 %
+    - [Bilirubin_direct, Bilirubin_total]  # 0.14 %
+    - [Hour, ICULOS]                 # 0 %: ICULOS counts from 1, Hour from 0
+  one_hot:                           # exactly one field of each group is 1
+    - [Unit1, Unit2]                 # 0 %: every patient is in exactly one ICU type
   # Named patient-hours offered in the /docs "Try it out" dropdown. The first one is also the
   # default request body. Tests check that every example is accepted by the contract.
   examples:
