@@ -18,7 +18,9 @@ from taed2_astra.config import load_params
 def call(url: str, payload: dict | None = None) -> tuple[int, dict]:
     """Return the status code and JSON body of a GET, or of a POST when a payload is given."""
     data = None if payload is None else json.dumps(payload).encode()
-    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    # Cloudflare in front of the public host rejects urllib's default User-Agent with a 403 (error 1010).
+    headers = {"Content-Type": "application/json", "User-Agent": "astra-smoke-test"}
+    request = urllib.request.Request(url, data=data, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=10) as response:
             return response.status, json.load(response)
