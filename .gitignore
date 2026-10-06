@@ -19,6 +19,9 @@
 # metrics/ and reports/data_validation.json ARE committed: they are the
 # small, reviewable outputs that make a pull request diff meaningful.
 
+# --- Runtime logs: client IP addresses are personal data -----------------
+/logs/
+
 # --- Python ---------------------------------------------------------------
 __pycache__/
 *.py[cod]
@@ -51,3 +54,5 @@ htmlcov/
 !.vscode/extensions.json
 !.vscode/launch.json
 .~lock.*#
+
+brag-output/

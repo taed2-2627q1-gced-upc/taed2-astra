@@ -6,10 +6,13 @@ Docs:         http://127.0.0.1:8000/docs
 
 import hashlib
 import json
+import logging
 import math
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Body, FastAPI, Request, Response
@@ -29,10 +32,39 @@ from taed2_astra.api.schemas import (
     inconsistencies,
     outside_validated_range,
 )
-from taed2_astra.config import METRICS_PATH, MODEL_PATH, get_logger, load_params
+from taed2_astra.config import ACCESS_LOG_PATH, METRICS_PATH, MODEL_PATH, get_logger, load_params
 from taed2_astra.modeling.predict import load_model, predict
 
 logger = get_logger(__name__)
+
+
+def build_access_log(path: Path, days: int) -> logging.Logger:
+    """Return a logger writing one readable line per request to path, rotated at midnight, kept `days` days."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handler = TimedRotatingFileHandler(path, when="midnight", backupCount=days, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s  %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    access = logging.getLogger("taed2_astra.access")
+    access.setLevel(logging.INFO)
+    for old in access.handlers:
+        old.close()
+    access.handlers = [handler]
+    # Kept out of the service log on stderr: IPs belong only in the file with a retention limit.
+    access.propagate = False
+    return access
+
+
+def client_origin(request: Request) -> tuple[str, str]:
+    """Return the caller's IP address and country code, as reported by Cloudflare.
+
+    Behind the Cloudflare tunnel the TCP peer is the local cloudflared, so the real
+    address is in CF-Connecting-IP. The header can be trusted because uvicorn only
+    listens on localhost: nobody reaches it without passing through Cloudflare.
+    CF-IPCountry is only sent when IP geolocation is enabled in the Cloudflare zone.
+    """
+    headers = request.headers
+    forwarded = headers.get("x-forwarded-for", "").split(",")[0].strip()
+    peer = request.client.host if request.client else "-"
+    return headers.get("cf-connecting-ip") or forwarded or peer, headers.get("cf-ipcountry", "-")
 
 
 @asynccontextmanager
@@ -61,6 +93,7 @@ async def lifespan(api: FastAPI) -> AsyncIterator[None]:
         features=list(model.feature_names_in_),
         metrics={key: value for key, value in metrics.items() if not key.startswith("inference_")},
     )
+    api.state.access_log = build_access_log(ACCESS_LOG_PATH, params["api"]["access_log_days"])
     logger.info("Serving %s (md5 %s)", api.state.info.name, api.state.info.model_md5)
     yield
 
@@ -104,11 +137,24 @@ app = FastAPI(
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-    """Log method, path, status and latency of every request."""
+    """Log method, path, status and latency of every request, and who sent it to the access log."""
     start = time.perf_counter()
     response = await call_next(request)
     elapsed_ms = (time.perf_counter() - start) * 1000
     logger.info("%s %s -> %d (%.1f ms)", request.method, request.url.path, response.status_code, elapsed_ms)
+    access = getattr(request.app.state, "access_log", None)
+    if access is not None:
+        ip, country = client_origin(request)
+        access.info(
+            "%-39s  %-2s  %-6s %-14s -> %d  %6.1f ms  %s",
+            ip,
+            country,
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+            request.headers.get("user-agent", "-")[:80],
+        )
     return response
 
 
