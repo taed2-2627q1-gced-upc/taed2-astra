@@ -56,6 +56,74 @@ benchmark:
 evaluate:
   threshold: 0.5
 
+# Data contract checked by the validate stage (Great Expectations) on both splits.
+# Critical checks stop the pipeline; warnings are recorded in reports/data_validation.json.
+validation:
+  min_rows: 10000
+  label_rate: [0.005, 0.05]          # PhysioNet 2019: ~1.8 % of ICU hours fall in the sepsis window
+  binary: [Gender, Unit1, Unit2]
+  complete: [Hour, Age, Gender, ICULOS]  # charted for every row; a gap means a broken export
+  dtypes: [int64, float64]           # build_preprocessor selects by dtype: a string column would change the model
+  range_mostly: 0.999                # tolerate rare charting errors; a unit change across a column still fails
+  # Physiologically plausible bounds, deliberately wide. Keys are also the expected feature set.
+  ranges:
+    Hour: [0, 400]
+    HR: [20, 300]
+    O2Sat: [20, 100]
+    Temp: [20, 45]
+    SBP: [20, 300]
+    MAP: [20, 300]
+    DBP: [20, 300]
+    Resp: [1, 100]
+    EtCO2: [10, 100]
+    BaseExcess: [-40, 40]
+    HCO3: [0, 60]
+    FiO2: [0.21, 1.0]                # a fraction: values like 40 or 4000 are percentages typed in the wrong unit
+    pH: [6.5, 8.0]
+    PaCO2: [10, 150]
+    SaO2: [20, 100]
+    AST: [0, 10000]
+    BUN: [0, 300]
+    Alkalinephos: [0, 4000]
+    Calcium: [0, 30]
+    Chloride: [20, 150]
+    Creatinine: [0, 50]
+    Bilirubin_direct: [0, 50]
+    Glucose: [10, 1000]
+    Lactate: [0, 35]
+    Magnesium: [0, 10]
+    Phosphate: [0, 20]
+    Potassium: [1, 12]
+    Bilirubin_total: [0, 50]
+    TroponinI: [0, 500]
+    Hct: [5, 80]
+    Hgb: [2, 30]
+    PTT: [10, 250]
+    WBC: [0, 500]
+    Fibrinogen: [30, 2000]
+    Platelets: [0, 2500]
+    Age: [0, 120]
+    Gender: [0, 1]
+    Unit1: [0, 1]
+    Unit2: [0, 1]
+    HospAdmTime: [-10000, 100]       # hours from hospital to ICU admission, negative by definition
+    ICULOS: [1, 400]
+
+# Release gates for the shipped model, checked by tests/test_model_quality.py on the test split.
+model_quality:
+  min_roc_auc: 0.78
+  min_pr_auc_lift: 4.0               # PR-AUC as a multiple of the positive rate (the no-skill baseline)
+  min_recall: 0.55                   # at evaluate.threshold: missing a septic patient is the costly error
+  slices: [Gender, Unit1]            # subgroups that must not be served much worse than the rest
+  max_slice_roc_auc_gap: 0.1
+  # Clinical deterioration must not lower the average predicted risk.
+  directional:
+    HR: 40
+    Temp: 2
+    Resp: 15
+    MAP: -30
+    Lactate: 4
+
 mlflow:
   experiment_name: taed2-astra
   # Override with MLFLOW_TRACKING_URI=sqlite:///mlflow.db to log runs locally.

@@ -39,14 +39,18 @@ stages:
   validate:
     cmd: python -X utf8 -m taed2_astra.data.validate
     deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
     - path: data/processed/train.parquet
       hash: md5
       md5: affdf13112dbf301cec404d2abd5a210
       size: 13834675
     - path: src/taed2_astra/data/validate.py
       hash: md5
-      md5: c69b359d54d66fe13068f10ae585c5ea
-      size: 2394
+      md5: 43a135fa03cea9a941f9122183b4b16b
+      size: 7429
     params:
       params.yaml:
         dataset:
@@ -60,11 +64,153 @@ stages:
           group: Patient_ID
           drop:
           - 'Unnamed: 0'
+        validation:
+          min_rows: 10000
+          label_rate:
+          - 0.005
+          - 0.05
+          binary:
+          - Gender
+          - Unit1
+          - Unit2
+          complete:
+          - Hour
+          - Age
+          - Gender
+          - ICULOS
+          dtypes:
+          - int64
+          - float64
+          range_mostly: 0.999
+          ranges:
+            Hour:
+            - 0
+            - 400
+            HR:
+            - 20
+            - 300
+            O2Sat:
+            - 20
+            - 100
+            Temp:
+            - 20
+            - 45
+            SBP:
+            - 20
+            - 300
+            MAP:
+            - 20
+            - 300
+            DBP:
+            - 20
+            - 300
+            Resp:
+            - 1
+            - 100
+            EtCO2:
+            - 10
+            - 100
+            BaseExcess:
+            - -40
+            - 40
+            HCO3:
+            - 0
+            - 60
+            FiO2:
+            - 0.21
+            - 1.0
+            pH:
+            - 6.5
+            - 8.0
+            PaCO2:
+            - 10
+            - 150
+            SaO2:
+            - 20
+            - 100
+            AST:
+            - 0
+            - 10000
+            BUN:
+            - 0
+            - 300
+            Alkalinephos:
+            - 0
+            - 4000
+            Calcium:
+            - 0
+            - 30
+            Chloride:
+            - 20
+            - 150
+            Creatinine:
+            - 0
+            - 50
+            Bilirubin_direct:
+            - 0
+            - 50
+            Glucose:
+            - 10
+            - 1000
+            Lactate:
+            - 0
+            - 35
+            Magnesium:
+            - 0
+            - 10
+            Phosphate:
+            - 0
+            - 20
+            Potassium:
+            - 1
+            - 12
+            Bilirubin_total:
+            - 0
+            - 50
+            TroponinI:
+            - 0
+            - 500
+            Hct:
+            - 5
+            - 80
+            Hgb:
+            - 2
+            - 30
+            PTT:
+            - 10
+            - 250
+            WBC:
+            - 0
+            - 500
+            Fibrinogen:
+            - 30
+            - 2000
+            Platelets:
+            - 0
+            - 2500
+            Age:
+            - 0
+            - 120
+            Gender:
+            - 0
+            - 1
+            Unit1:
+            - 0
+            - 1
+            Unit2:
+            - 0
+            - 1
+            HospAdmTime:
+            - -10000
+            - 100
+            ICULOS:
+            - 1
+            - 400
     outs:
     - path: reports/data_validation.json
       hash: md5
-      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
-      size: 3754
+      md5: 6543e84b59e7065d500c76f3383724be
+      size: 40436
   benchmark:
     cmd: python -X utf8 -m taed2_astra.modeling.benchmark
     deps:
@@ -315,3 +461,23 @@ stages:
             features); ensembles rejected because their extra energy bought no
             meaningful PR-AUC gain
         train.model: hist_gradient_boosting
+  plots:
+    cmd: python -X utf8 -m taed2_astra.visualization.plots
+    deps:
+    - path: reports/emissions/emissions.csv
+      hash: md5
+      md5: 6952d3c53fb1b180b05beb6e8fe00691
+      size: 3388
+    - path: src/taed2_astra/visualization/plots.py
+      hash: md5
+      md5: 937013c8d270308932bf4c479552ed1c
+      size: 3905
+    outs:
+    - path: reports/figures/duration_vs_energy.png
+      hash: md5
+      md5: d553da2c4651ee2c49b9815ec4b79cf3
+      size: 45602
+    - path: reports/figures/energy_consumed_per_model.png
+      hash: md5
+      md5: 1f00432e98302e82b056122a8ef5cb9e
+      size: 47522

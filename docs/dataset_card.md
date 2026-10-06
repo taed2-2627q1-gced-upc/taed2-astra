@@ -80,9 +80,20 @@
   **zero patients in common**. Splitting by row instead would leak each patient's own
   trajectory into the test set and inflate every metric. Within training, model selection
   uses `StratifiedGroupKFold` on the same column (`benchmark` stage), for the same reason.
-- **Validation** (`src/taed2_astra/data/validate.py`, output `reports/data_validation.json`):
-  the training split must be non-empty, contain `SepsisLabel` with no nulls and only the
-  values `{0, 1}`, and contain a non-null `Patient_ID`. The pipeline stops if any check fails.
+- **Validation** (`src/taed2_astra/data/validate.py`, rules in `params.yaml: validation`,
+  output `reports/data_validation.json`): Great Expectations runs the same suite on **both**
+  splits.
+  - *Critical* (the pipeline stops): at least 10,000 rows; exactly the expected 43 columns;
+    every column `int64`/`float64`; `SepsisLabel` non-null, in `{0, 1}` and with a mean
+    between 0.5 % and 5 %; `Patient_ID`, `Hour`, `Age`, `Gender`, `ICULOS` non-null;
+    `Gender`, `Unit1`, `Unit2` in `{0, 1}`; **zero patients shared between train and test**.
+  - *Warning* (recorded for review): each of the 41 features within a physiologically
+    plausible range for at least 99.9 % of its non-null values.
+  - **What it caught:** `FiO2` (a fraction, 0.21–1.0) is out of range in 0.30 % of its train
+    values: 291 below 0.21 (mostly `0.0`) and 24 above 1 (`2.0`, `10`, `4000`, i.e.
+    percentages typed in the wrong unit). It is a warning, not a stop, because the affected
+    values are 0.03 % of rows; cleaning them is a candidate preprocessing step.
+    `HospAdmTime` has 8 nulls in train, so it is deliberately not in the "complete" list.
 
 ## Ethical considerations
 

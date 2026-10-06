@@ -5,8 +5,9 @@
 ## Checklist
 
 - [ ] Branch follows GitHub Flow (`feature/...`, `fix/...`) and targets `main`
-- [ ] `pytest` passes locally
-- [ ] Linters pass (`black`, `isort`, `flake8`, `pylint`)
+- [ ] PR title is a Conventional Commit (`feat: ...`, `fix: ...`); it becomes the merge commit
+- [ ] `make qa` passes locally (ruff, pylint, pytest + coverage, Pynblint)
 - [ ] No data, models or credentials committed to Git (use DVC)
-- [ ] `params.yaml` and `dvc.yaml` updated if the pipeline changed
+- [ ] If the pipeline changed: `params.yaml` / `dvc.yaml` updated, `dvc repro` run, `dvc.lock` committed and `dvc push` done
+- [ ] If the model changed: `make test` passes **with** `models/model.pkl` present (release gates), model card numbers updated
 - [ ] Docs updated if behaviour changed

@@ -1,10 +1,11 @@
 # taed2-astra
 
-Patient risk prediction service — TAED2 course project, team **Astra**.
+Hourly sepsis early-warning service for ICU patients (PhysioNet 2019), built for
+the TAED2 course by team **Astra**.
 
-> **Status: scaffold.** The structure, tooling and pipeline wiring are in place.
-> The modelling logic is deliberately left unimplemented — every stub is marked
-> with `TODO(team)` and raises `NotImplementedError`.
+> **Status:** Milestones 1–3 done. The pipeline is reproducible with `dvc repro`, the
+> data and model are quality-gated in CI, and CO2 is reported in the model card.
+> Milestone 4 (deploying the FastAPI service) is in progress.
 
 ## Team
 
@@ -107,8 +108,17 @@ Browse them with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 
 ## Workflow
 
-**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate}`,
-skipping any stage whose dependencies and params are unchanged.
+**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate → co2_report}`
+and `plots`, skipping any stage whose dependencies and params are unchanged. After a
+repro, `dvc push` before opening a pull request, so teammates and CI can pull what
+`dvc.lock` points at.
+
+**Quality assurance** — `make qa` runs what CI runs: ruff and pylint, the pytest suite
+with a coverage floor, and Pynblint. The `validate` stage applies a Great Expectations
+data contract (`params.yaml: validation`) to both splits, and
+`tests/test_model_quality.py` applies release gates (`params.yaml: model_quality`) to
+the trained model. See [AGENTS.md](AGENTS.md#ci-and-branch-protection) for the CI checks
+that protect `main`.
 
 **Model selection** — `benchmark` scores every candidate listed in
 `params.yaml` (`benchmark.models`) on the same patient-grouped CV folds and
@@ -142,8 +152,9 @@ See [AGENTS.md](AGENTS.md) for branching, commit and review conventions, and
 | Data versioning | DVC |
 | Experiment tracking | MLflow |
 | Data validation | Great Expectations |
-| Testing | Pytest |
-| Linting and formatting | Ruff |
-| Notebook quality | Pynblint |
+| Testing | Pytest (+ pytest-cov) |
+| Linting and formatting | Ruff, Pylint |
+| Notebook and repository quality | Pynblint |
 | Sustainability | CodeCarbon |
+| CI and branch protection | GitHub Actions + repository ruleset |
 | Serving | FastAPI |

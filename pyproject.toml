@@ -156,3 +156,5 @@ branch = true
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+# A ratchet, not a target: CI measures 59 % without data on disk. Raise it as tests land; never lower it.
+fail_under = 55

@@ -20,9 +20,11 @@ stages:
     cmd: python -X utf8 -m taed2_astra.data.validate
     deps:
       - data/processed/train.parquet
+      - data/processed/test.parquet
       - src/taed2_astra/data/validate.py
     params:
       - dataset
+      - validation
     outs:
       - reports/data_validation.json:
           cache: false   # small and reviewable: committed to Git, not the DVC cache
@@ -91,3 +93,15 @@ stages:
     params:
       - train.model
       - model_card
+
+  # Sustainability figures for the report and model card, redrawn whenever CodeCarbon logs a new run.
+  plots:
+    cmd: python -X utf8 -m taed2_astra.visualization.plots
+    deps:
+      - reports/emissions/emissions.csv
+      - src/taed2_astra/visualization/plots.py
+    outs:
+      - reports/figures/energy_consumed_per_model.png:
+          cache: false
+      - reports/figures/duration_vs_energy.png:
+          cache: false
