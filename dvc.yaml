@@ -37,6 +37,7 @@ stages:
       - src/taed2_astra/modeling/benchmark.py
       - src/taed2_astra/modeling/registry.py
       - src/taed2_astra/modeling/evaluate.py
+      - src/taed2_astra/modeling/fairness.py
       - src/taed2_astra/features/build_features.py
       - src/taed2_astra/energy.py
     params:
@@ -44,6 +45,7 @@ stages:
       - train
       - benchmark
       - evaluate.threshold
+      - fairness
     metrics:
       - metrics/benchmark.json:
           cache: false
@@ -55,11 +57,13 @@ stages:
       - reports/data_validation.json
       - src/taed2_astra/modeling/train.py
       - src/taed2_astra/modeling/registry.py
+      - src/taed2_astra/modeling/fairness.py
       - src/taed2_astra/features/build_features.py
       - src/taed2_astra/energy.py
     params:
       - dataset
       - train
+      - fairness
     outs:
       - models/model.pkl
 
@@ -77,6 +81,25 @@ stages:
       - evaluate
     metrics:
       - metrics/metrics.json:
+          cache: false
+
+  # Group fairness of the shipped model's decisions on the test split (AIF360), per fairness.attributes.
+  # The gates on these numbers live in tests/test_model_quality.py, next to the other release gates.
+  fairness:
+    cmd: python -X utf8 -m taed2_astra.modeling.fairness
+    deps:
+      - data/processed/test.parquet
+      - models/model.pkl
+      - src/taed2_astra/modeling/fairness.py
+      - src/taed2_astra/modeling/predict.py
+      - src/taed2_astra/features/build_features.py
+    params:
+      - dataset
+      - evaluate.threshold
+      - fairness.favorable_label
+      - fairness.attributes
+    metrics:
+      - metrics/fairness.json:
           cache: false
 
   # "Reporting energy in the model card": the shipped model's CodeCarbon row becomes the

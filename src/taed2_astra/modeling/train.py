@@ -24,6 +24,7 @@ from taed2_astra.config import (
 )
 from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
+from taed2_astra.modeling.fairness import fit_params, sample_weights
 from taed2_astra.modeling.registry import build_model
 
 log = get_logger(__name__)
@@ -51,6 +52,7 @@ def main() -> None:
 
     x_train, y_train = split_xy(pd.read_parquet(TRAIN_PATH), dataset)
     model = build_model(name, train_params)
+    weights = sample_weights(x_train, y_train, params)
 
     EMISSIONS_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
@@ -76,11 +78,12 @@ def main() -> None:
         )
         mlflow.log_param("n_features", x_train.shape[1])
         mlflow.log_param("n_train_rows", len(x_train))
+        mlflow.log_param("mitigation", params["fairness"]["mitigation"]["method"])
 
         tracker = EmissionsTracker(project_name=f"train-{name}", output_dir=str(EMISSIONS_DIR), log_level="error")
         tracker.start()
         try:
-            model.fit(x_train, y_train)
+            model.fit(x_train, y_train, **fit_params(model, weights))
         finally:
             tracker.stop()
 

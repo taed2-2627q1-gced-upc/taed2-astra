@@ -7,7 +7,7 @@ Conventions for anyone — human or AI agent — working in this repository.
 `taed2-astra`: an hourly sepsis early-warning service for ICU patients, built
 for the TAED2 course on the PhysioNet 2019 dataset. The DVC pipeline is
 implemented end to end (`prepare → validate → benchmark / train → evaluate →
-co2_report, plots`), and a FastAPI app serves the trained model. The data
+fairness, co2_report, plots`), and a FastAPI app serves the trained model. The data
 contract, release gates and CO2 reporting cover Milestone 3. Milestone 4
 (deployment and a fully tested API) is in progress.
 
@@ -69,6 +69,7 @@ Use `uv run <cmd>` for everything. Do not `pip install` into the system Python.
 | New dependency | `pyproject.toml`, then `uv sync` (CI fails if `uv.lock` is stale) |
 | New data rule (range, required column, prevalence) | `params.yaml: validation` |
 | New model release gate | `params.yaml: model_quality` + `tests/test_model_quality.py` |
+| New protected attribute or mitigation | `params.yaml: fairness` |
 | New CI check | `.github/workflows/ci.yml` + `.github/rulesets/main.json` |
 | Exploration | `notebooks/` — never import a notebook from `src/` |
 
@@ -94,8 +95,9 @@ make api        # uvicorn, docs at /docs
 | Unit and contract tests (config, registry, metrics, energy, plots, API) | `tests/test_*.py` | No |
 | Prepare stage: grouped split, no leakage, reproducible | `tests/test_make_dataset.py` | No |
 | Data validation: each expectation catches its defect | `tests/test_validate.py` | No |
+| Fairness audit and Reweighing: metrics, weights, serving never imports AIF360 | `tests/test_fairness.py` | No |
 | Prediction contract: determinism, key order, unknown or missing fields | `tests/test_predict.py` | No |
-| Release gates: performance, slices, directional behaviour | `tests/test_model_quality.py` (`integration`) | Yes: skips without `models/model.pkl` |
+| Release gates: performance, slices, group fairness, directional behaviour | `tests/test_model_quality.py` (`integration`) | Yes: skips without `models/model.pkl` |
 | Data contract on the real splits | `validate` DVC stage (Great Expectations) | Yes |
 
 A test's docstring says *why* the behaviour matters, not what the assert does.

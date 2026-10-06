@@ -108,7 +108,7 @@ Browse them with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 
 ## Workflow
 
-**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate → co2_report}`
+**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate → fairness, co2_report}`
 and `plots`, skipping any stage whose dependencies and params are unchanged. After a
 repro, `dvc push` before opening a pull request, so teammates and CI can pull what
 `dvc.lock` points at.
@@ -117,7 +117,8 @@ repro, `dvc push` before opening a pull request, so teammates and CI can pull wh
 with a coverage floor, and Pynblint. The `validate` stage applies a Great Expectations
 data contract (`params.yaml: validation`) to both splits, and
 `tests/test_model_quality.py` applies release gates (`params.yaml: model_quality`) to
-the trained model. See [AGENTS.md](AGENTS.md#ci-and-branch-protection) for the CI checks
+the trained model, including AIF360 group-fairness gates on `Gender` and `Age`
+(`params.yaml: fairness`, audited by the `fairness` stage into `metrics/fairness.json`). See [AGENTS.md](AGENTS.md#ci-and-branch-protection) for the CI checks
 that protect `main`.
 
 **Model selection** — `benchmark` scores every candidate listed in

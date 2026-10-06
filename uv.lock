@@ -15,6 +15,29 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "aif360"
+version = "0.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scikit-learn", version = "1.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/bb/d96f06e8c461e11d3a6f68d9141cbca484708c457c8e36987a7c3048335f/aif360-0.6.1.tar.gz", hash = "sha256:635afc0bbe785e08fa242eee5e5080238193d0583bc0f5006a132050d4fb77f2", size = 2003486, upload-time = "2024-04-08T20:03:18.11Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/7b/7e4fa9e7b6f62759663db3b5aaa12a6cc9ef866223e5978c25844bceb762/aif360-0.6.1-py3-none-any.whl", hash = "sha256:2bae0f7ba95c4902f551df33c7603c3be0319442a96b35ad99199a7d62093217", size = 259720, upload-time = "2024-04-08T20:03:12.953Z" },
+]
+
+[[package]]
 name = "aiobotocore"
 version = "3.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -5049,6 +5072,7 @@ name = "taed2-astra"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "aif360" },
     { name = "codecarbon" },
     { name = "dvc", extra = ["s3"] },
     { name = "fastapi" },
@@ -5092,6 +5116,7 @@ notebooks = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aif360", specifier = ">=0.6.1,<0.7" },
     { name = "codecarbon", specifier = ">=2.4" },
     { name = "dvc", extras = ["s3"], specifier = ">=3.50" },
     { name = "fastapi", specifier = ">=0.110" },

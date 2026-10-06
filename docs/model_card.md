@@ -120,6 +120,37 @@ Ranked by PR-AUC, the honest metric at 1.8 % prevalence (mean ± std over folds)
   inflates positive probabilities, 0.5 corresponds to a high-recall / low-precision regime.
   The threshold-free metrics (ROC-AUC, PR-AUC) do not depend on it.
 
+## Fairness
+
+The `fairness` stage audits the shipped model's decisions on the test split with
+[AI Fairness 360](https://github.com/Trusted-AI/AIF360) and writes `metrics/fairness.json`.
+Definitions live in `params.yaml: fairness`:
+
+- **Favorable outcome = an alert.** For a septic patient, being flagged is what brings a
+  clinician to the bedside, so the metrics ask who is *denied* an alert.
+- **Groups:** `Gender` (reference: male) and `Age` cut at 65 (reference: under 65). Metrics
+  are *other group minus reference*. Race, ethnicity and hospital are not in the data, so
+  they cannot be audited.
+- **Unit of analysis:** the ICU hour, the same as every other metric in this card.
+
+| Attribute | Recall (other / reference) | Equal opportunity diff. | Average odds diff. | Disparate impact | Sepsis prevalence (other / reference) |
+|---|---|---|---|---|---|
+| `Gender` (female vs male) | 0.612 / 0.654 | −0.042 | −0.032 | 0.871 | 1.44 % / 1.89 % |
+| `Age` (≥ 65 vs < 65) | 0.647 / 0.628 | +0.019 | +0.019 | 1.115 | 1.75 % / 1.63 % |
+
+- **Reading:** septic women are flagged a little less often than septic men (61 % vs 65 % of
+  label-window hours). Both gaps are within the release gates (|difference| ≤ 0.10).
+- **Why disparate impact is not a gate:** sepsis is less common in women in this data, so an
+  equal alert rate would mean *over*-alerting one group. Only error-rate parity (equal
+  opportunity, average odds) is enforced.
+- **Mitigation available, not shipped.** `fairness.mitigation.method: reweighing` trains with
+  AIF360 Reweighing weights on `Gender`. In a one-off check against this test split it
+  roughly halved the gaps (equal opportunity −0.042 → −0.023, average odds −0.032 → −0.016,
+  disparate impact 0.871 → 0.937). Overall recall moved 0.638 → 0.622, ROC-AUC 0.809 → 0.807
+  and PR-AUC 0.092 → 0.094. The current gaps already pass the gates, so the unweighted model
+  ships. Group-specific thresholds (post-processing) were rejected: they would make the
+  served decision depend on the patient's sex.
+
 ## Limitations
 
 - **Per-hour, memoryless.** Each row is scored on its own; the model sees no trend
@@ -186,6 +217,8 @@ regression fails, not noise:
 | PR-AUC lift over the positive rate | ≥ 4.0× | 5.5× |
 | Recall at `evaluate.threshold` | ≥ 0.55 | 0.638 |
 | ROC-AUC gap between slices (`Gender`, `Unit1`) | ≤ 0.10 | 0.016 (Gender), 0.045 (Unit1) |
+| \|Equal opportunity difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.042 (Gender), 0.019 (Age) |
+| \|Average odds difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.032 (Gender), 0.019 (Age) |
 | Mean risk rises when HR +40, Temp +2 °C, Resp +15, MAP −30, Lactate +4 | > 0 | all rise |
 | Identifiers (`Patient_ID`) and the label are not model inputs | — | pass |
 

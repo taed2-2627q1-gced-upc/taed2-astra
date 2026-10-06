@@ -35,6 +35,8 @@ dependencies = [
     # serving
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
+    # fairness audit and mitigation; capped because 0.x minors have changed public APIs
+    "aif360>=0.6.1,<0.7",
 ]
 
 [dependency-groups]
@@ -67,6 +69,7 @@ astra-validate  = "taed2_astra.data.validate:main"
 astra-benchmark = "taed2_astra.modeling.benchmark:main"
 astra-train     = "taed2_astra.modeling.train:main"
 astra-evaluate  = "taed2_astra.modeling.evaluate:main"
+astra-fairness  = "taed2_astra.modeling.fairness:main"
 astra-co2       = "taed2_astra.energy:main"
 astra-plots     = "taed2_astra.visualization.plots:main"
 
