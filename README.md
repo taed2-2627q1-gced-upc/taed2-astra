@@ -107,7 +107,8 @@ curl -X POST http://127.0.0.1:8000/predict \
 Only `Hour`, `Age`, `Gender` and `ICULOS` are required. Leave out any measurement that
 was not taken. Misspelled fields, physically impossible values (a temperature of 98.6 °F,
 an FiO2 of 40 %) and numbers sent as text get a `422` that names the field. Extreme but
-possible values, such as an HR of 19, are scored and come back with a warning.
+possible values, such as an HR of 19, and contradicting fields, such as a diastolic above
+the systolic pressure, are scored and come back with a warning.
 See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk examples and the full contract.
 
 ## Commands

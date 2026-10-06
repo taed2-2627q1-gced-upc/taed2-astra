@@ -1,6 +1,7 @@
 """API contract tests. They run on a synthetic model, without data or a trained model on disk."""
 
 import hashlib
+import json
 import pickle
 from http import HTTPStatus
 
@@ -10,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from taed2_astra.api import main as api_main
-from taed2_astra.api.schemas import DEFAULT_EXAMPLE, MAX_BATCH_SIZE, OPENAPI_EXAMPLES
+from taed2_astra.api.schemas import DEFAULT_EXAMPLE, MAX_BATCH_SIZE, MAX_ERRORS, OPENAPI_EXAMPLES
 from taed2_astra.config import load_params
 from taed2_astra.modeling.registry import build_model
 
@@ -34,6 +35,11 @@ def test_root_points_to_the_docs(client):
     response = client.get("/")
     assert response.status_code == HTTPStatus.OK
     assert response.json()["docs"] == "/docs"
+
+
+def test_health_answers_head_requests(client):
+    """Uptime monitors probe with HEAD by default; a 405 there would page someone for a healthy service."""
+    assert client.head("/health").status_code == HTTPStatus.OK
 
 
 def test_health_reports_the_running_version(client):
@@ -117,6 +123,22 @@ def test_malformed_records_are_rejected_not_scored(client, case, record):
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, case
 
 
+@pytest.mark.parametrize("literal", ["NaN", "Infinity", "-Infinity", "1e999"])
+def test_non_finite_numbers_are_rejected_with_a_422(client, literal):
+    """Python's JSON parser accepts NaN and Infinity; echoing them back in the error used to crash with a 500."""
+    # Written by hand: json.dumps cannot produce 1e999, and the test must not depend on its NaN spelling.
+    body = json.dumps({"records": [{**EXAMPLE, MEASUREMENT: "PLACEHOLDER"}]}).replace('"PLACEHOLDER"', literal)
+    response = client.post("/predict", content=body, headers={"Content-Type": "application/json"})
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert MEASUREMENT in response.json()["detail"][0]["loc"]
+
+
+def test_unknown_top_level_keys_are_rejected(client):
+    """A misspelled key next to records would otherwise be dropped without the client noticing."""
+    response = client.post("/predict", json={"records": [EXAMPLE], "threshold": 0.1})
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
 def test_errors_name_the_offending_field(client):
     """A clinician integrating the API must see which field to fix, not just that something failed."""
     response = post(client, {**EXAMPLE, MEASUREMENT: LIMITS[MEASUREMENT][1] + 1})
@@ -136,6 +158,49 @@ def test_in_range_records_carry_no_warnings(client):
     """Warnings must stay rare and meaningful, or clients learn to ignore them."""
     (prediction,) = post(client, EXAMPLE).json()["predictions"]
     assert prediction["warnings"] == []
+
+
+def swapped(low: str, high: str) -> dict:
+    """Return the example with low set above high, both inside their hard limits."""
+    top = min(LIMITS[low][1], LIMITS[high][1])
+    bottom = max(LIMITS[low][0], LIMITS[high][0])
+    return {**EXAMPLE, low: top, high: bottom}
+
+
+@pytest.mark.parametrize(("low", "high"), PARAMS["api"]["ordered"])
+def test_contradicting_fields_are_scored_with_a_warning(client, low, high):
+    """Each value alone is plausible, but no patient has, say, a diastolic above the systolic pressure."""
+    response = post(client, swapped(low, high))
+    assert response.status_code == HTTPStatus.OK
+    (prediction,) = response.json()["predictions"]
+    assert any(low in warning and high in warning for warning in prediction["warnings"])
+
+
+@pytest.mark.parametrize("value", [0, 1])
+@pytest.mark.parametrize("group", PARAMS["api"]["one_hot"])
+def test_one_hot_groups_need_exactly_one_flag(client, group, value):
+    """A patient sits in exactly one ICU type; all flags set, or none, is a broken export."""
+    (prediction,) = post(client, {**EXAMPLE, **dict.fromkeys(group, value)}).json()["predictions"]
+    assert any(all(name in warning for name in group) for warning in prediction["warnings"])
+
+
+def test_relation_rules_name_real_features():
+    """A typo in a rule would silently switch that check off."""
+    rules = PARAMS["api"]["ordered"] + PARAMS["api"]["one_hot"]
+    assert {name for rule in rules for name in rule} <= set(VALIDATION["ranges"])
+
+
+def test_validation_errors_are_capped(client):
+    """Thousands of unknown keys must not turn a small request into a huge answer."""
+    record = {**EXAMPLE, **{f"unknown_{i}": 1 for i in range(MAX_ERRORS * 5)}}
+    assert len(post(client, record).json()["detail"]) == MAX_ERRORS
+
+
+def test_long_rejected_input_is_not_echoed_back(client):
+    """A 1 MB field name is rejected; repeating it in the error would double the cost of the request."""
+    response = post(client, {**EXAMPLE, "k" * 1_000_000: 1})
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert len(response.content) < 10_000
 
 
 def test_hard_limits_cover_every_training_value():

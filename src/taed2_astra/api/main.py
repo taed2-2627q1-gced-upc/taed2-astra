@@ -6,22 +6,28 @@ Docs:         http://127.0.0.1:8000/docs
 
 import hashlib
 import json
+import math
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Body, FastAPI, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from taed2_astra import __version__
 from taed2_astra.api.schemas import (
+    MAX_ERRORS,
     OPENAPI_EXAMPLES,
     HealthResponse,
     ModelInfo,
     Prediction,
     PredictionRequest,
     PredictionResponse,
-    outside_training_range,
+    inconsistencies,
+    outside_validated_range,
 )
 from taed2_astra.config import METRICS_PATH, MODEL_PATH, get_logger, load_params
 from taed2_astra.modeling.predict import load_model, predict
@@ -45,7 +51,9 @@ async def lifespan(api: FastAPI) -> AsyncIterator[None]:
         )
     metrics = json.loads(METRICS_PATH.read_text(encoding="utf-8")) if METRICS_PATH.exists() else {}
     api.state.model = model
-    api.state.training_ranges = params["validation"]["ranges"]
+    api.state.validated_ranges = params["validation"]["ranges"]
+    api.state.ordered = params["api"]["ordered"]
+    api.state.one_hot = params["api"]["one_hot"]
     api.state.info = ModelInfo(
         name=params["train"]["model"],
         model_md5=hashlib.md5(MODEL_PATH.read_bytes()).hexdigest(),
@@ -104,6 +112,46 @@ async def log_requests(request: Request, call_next: Callable[[Request], Awaitabl
     return response
 
 
+# Long enough for any real field name or value, short enough that a 1 MB key is not echoed back.
+MAX_ECHO_CHARS = 100
+
+
+def json_safe(value: object) -> object:
+    """Return value with NaN and infinities named, which JSON can carry, and long strings cut short."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return str(value)
+    if isinstance(value, str) and len(value) > MAX_ECHO_CHARS:
+        return value[:MAX_ECHO_CHARS] + "..."
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [json_safe(item) for item in value]
+    return value
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return the usual 422, kept small and always serialisable.
+
+    FastAPI echoes each rejected value in `detail[].input`. JSON has no NaN or Infinity,
+    so the default handler crashed with a 500 on them; and a record with thousands of
+    unknown keys produced an answer ten times the size of the request. Only the first
+    errors are listed, and a rejected record or list is not echoed back whole.
+    """
+    errors = [
+        {key: item for key, item in error.items() if not (key == "input" and isinstance(item, dict | list))}
+        for error in exc.errors()[:MAX_ERRORS]
+    ]
+    return JSONResponse(status_code=422, content={"detail": json_safe(jsonable_encoder(errors))})
+
+
+def record_warnings(record: dict, state: object) -> list[str]:
+    """Return every warning for one record: rare values first, then contradicting fields."""
+    return outside_validated_range(record, state.validated_ranges) + inconsistencies(
+        record, state.ordered, state.one_hot
+    )
+
+
 # These docstrings are rendered in /docs, so they are written for API callers.
 
 
@@ -128,6 +176,8 @@ def root() -> dict:
     return {"message": "Astra sepsis early-warning API. See /docs for usage.", "docs": "/docs"}
 
 
+# HEAD as well: uptime monitors probe with it by default and would report a 405 as down.
+@app.head("/health", include_in_schema=False)
 @app.get(
     "/health",
     response_model=HealthResponse,
@@ -227,8 +277,9 @@ def predict_endpoint(
         `threshold`: the alert threshold applied.
         `model_md5`: fingerprint of the model that answered (see `/model`).
 
-        A warning means a value is possible but rarer than anything the model was
-        trained on, for example an HR of 19. The risk is still returned; treat it with care.
+        A warning means the record is possible but unusual: a value rare in the training
+        data, such as an HR of 19, or fields that contradict each other, such as a
+        diastolic pressure above the systolic. The risk is still returned; treat it with care.
 
     Raises
     ------
@@ -236,7 +287,8 @@ def predict_endpoint(
         A record has an unknown or misspelled field, a value that cannot be a real
         measurement, text instead of a number or a missing required field, or the
         batch is empty or too large. `detail[].loc` names the record and field to fix,
-        and nothing in the batch is scored.
+        and nothing in the batch is scored. Only the first problems are listed: fix
+        them and send again to see any others.
     """
     # exclude_none: an omitted measurement must reach the imputer as NaN, not as a None object column.
     records = [record.model_dump(exclude_none=True) for record in body.records]
@@ -244,7 +296,7 @@ def predict_endpoint(
     scores = predict(records, request.app.state.model)
     return PredictionResponse(
         predictions=[
-            Prediction(**score, warnings=outside_training_range(record, request.app.state.training_ranges))
+            Prediction(**score, warnings=record_warnings(record, request.app.state))
             for score, record in zip(scores, records, strict=True)
         ],
         threshold=info.threshold,
