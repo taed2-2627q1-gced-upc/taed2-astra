@@ -1,12 +1,13 @@
 ---
 co2_eq_emissions:
-  emissions: 0.0901
-  power_consumption: 0.000518
+  emissions: 0.178
+  power_consumption: 0.001022
   source: CodeCarbon 3.3.1 (EmissionsTracker), reports/emissions/emissions.csv
   training_type: pre-training
   geographical_location: catalonia, Spain
-  hardware_used: 12 x 13th Gen Intel(R) Core(TM) i7-1355U (CPU)
-  training_time: 107.9
+  hardware_used: 12 x Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz (CPU), 1 x 1 x NVIDIA GeForce GTX 1650
+    (GPU)
+  training_time: 93.2
   optimization_techniques: histogram-based gradient boosting (binned features); ensembles rejected because
     their extra energy bought no meaningful PR-AUC gain
 model_info:
