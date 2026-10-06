@@ -1,0 +1,18 @@
+# systemd unit for the API. Installed by `make service-install`, which fills in
+# @USER@ and @DIR@ (the repository checkout) before copying it to /etc/systemd/system.
+[Unit]
+Description=Astra sepsis early-warning API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=@USER@
+WorkingDirectory=@DIR@
+# One worker: the VM has one CPU, and each worker holds its own copy of the model in memory.
+ExecStart=@DIR@/.venv/bin/uvicorn taed2_astra.api.main:app --host 127.0.0.1 --port 8000 --workers 1
+# A missing or mismatched model stops startup; retry slowly instead of spinning.
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

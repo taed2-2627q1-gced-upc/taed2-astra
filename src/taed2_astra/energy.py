@@ -79,12 +79,18 @@ def build_card_metadata(
 ) -> dict:
     """Return the co2_eq_emissions and model_info blocks of the Hugging Face model card metadata.
 
-    Args:
-        run: The shipped model's training row from emissions.csv.
-        metrics: Test-split metrics from metrics/metrics.json.
-        model_file_size: Size of models/model.pkl in bytes.
-        datasets_size: Number of training rows.
-        card: The ``model_card`` section of params.yaml (facts CodeCarbon cannot measure).
+    Parameters
+    ----------
+    run : pd.Series
+        The shipped model's training row from emissions.csv.
+    metrics : dict[str, float]
+        Test-split metrics from metrics/metrics.json.
+    model_file_size : int
+        Size of models/model.pkl in bytes.
+    datasets_size : int
+        Number of training rows.
+    card : dict
+        The ``model_card`` section of params.yaml (facts CodeCarbon cannot measure).
     """
     location = ", ".join(str(part) for part in (run.get("region"), run.get("country_name")) if pd.notna(part))
     return {
