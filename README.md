@@ -1,23 +1,43 @@
 # Astra · Sepsis early warning for the ICU
 
-[![CI](https://github.com/taed2-2627q1-gced-upc/taed2-astra/actions/workflows/ci.yml/badge.svg)](https://github.com/taed2-2627q1-gced-upc/taed2-astra/actions/workflows/ci.yml)
-![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![uv](https://img.shields.io/badge/env-uv-purple)
-![DVC](https://img.shields.io/badge/data-DVC-945dd6)
-![FastAPI](https://img.shields.io/badge/serving-FastAPI-009688)
+<p align="center">
+  <a href="https://astra.quick2query.com/docs"><img src="https://img.shields.io/badge/live%20API-astra.quick2query.com-2EA44F?logo=cloudflare&logoColor=white" alt="Live API"></a>
+  <a href="https://github.com/taed2-2627q1-gced-upc/taed2-astra/actions/workflows/ci.yml"><img src="https://github.com/taed2-2627q1-gced-upc/taed2-astra/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/env-uv-DE5FE9?logo=uv&logoColor=white" alt="uv">
+  <img src="https://img.shields.io/badge/data-DVC-945DD6?logo=dvc&logoColor=white" alt="DVC">
+  <img src="https://img.shields.io/badge/tracking-MLflow-0194E2?logo=mlflow&logoColor=white" alt="MLflow">
+  <img src="https://img.shields.io/badge/serving-FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/lint-ruff-D7FF64?logo=ruff&logoColor=black" alt="ruff">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
+</p>
+
+<p align="center">
+  <a href="https://github.com/taed2-2627q1-gced-upc/taed2-astra/graphs/contributors"><img src="https://img.shields.io/github/contributors/taed2-2627q1-gced-upc/taed2-astra" alt="Contributors"></a>
+  <a href="https://github.com/taed2-2627q1-gced-upc/taed2-astra/commits/main"><img src="https://img.shields.io/github/last-commit/taed2-2627q1-gced-upc/taed2-astra" alt="Last commit"></a>
+  <a href="https://github.com/taed2-2627q1-gced-upc/taed2-astra/pulls?q=is%3Apr+is%3Amerged"><img src="https://img.shields.io/github/issues-pr-closed/taed2-2627q1-gced-upc/taed2-astra?label=merged%20PRs" alt="Pull requests"></a>
+</p>
+
+<p align="center">
+  <a href="https://astra.quick2query.com/docs"><b>Try the live API</b></a> ·
+  <a href="docs/api.md">API reference</a> ·
+  <a href="docs/model_card.md">Model card</a> ·
+  <a href="docs/dataset_card.md">Dataset card</a>
+</p>
 
 Every hour, for every ICU patient, Astra estimates the risk that sepsis is developing,
 from the vitals and labs charted in that hour. Trained on the PhysioNet 2019 challenge
 data and served as a REST API. Built by team **Astra** for TAED2 (UPC, GCED).
 
 > **Status:** Milestones 1–3 done (reproducible pipeline, data contract, release gates,
-> CO2 reporting). Milestone 4 (API deployed on the UPC VM) is in progress.
+> CO2 reporting). Milestone 4: the API is deployed at
+> [astra.quick2query.com](https://astra.quick2query.com/docs).
 
 | | |
 |---|---|
 | **Model** | Histogram gradient boosting · ROC-AUC 0.81 · recall 0.64 at threshold 0.5 ([model card](docs/model_card.md)) |
 | **Data** | PhysioNet 2019, one row per patient-hour ([dataset card](docs/dataset_card.md)) |
-| **API** | `POST /predict` scores a batch of patient-hours ([API reference](docs/api.md)) |
+| **API** | `POST /predict` scores a batch of patient-hours · live at [astra.quick2query.com](https://astra.quick2query.com/docs) ([API reference](docs/api.md)) |
 
 ## Quick start
 
@@ -40,6 +60,30 @@ make smoke
 
 `make model` needs a personal DagsHub token in `.dvc/config.local`. The two commands are in
 [docs/development.md](docs/development.md#dagshub-credentials).
+
+## Live API
+
+The API is deployed at **https://astra.quick2query.com**, behind Cloudflare.
+
+<p align="center">
+  <a href="https://astra.quick2query.com/docs"><img src="docs/images/api-docs.png" width="600" alt="Swagger UI of the live Astra API at astra.quick2query.com/docs"></a>
+</p>
+
+| Link | What |
+|------|------|
+| [/docs](https://astra.quick2query.com/docs) | Interactive Swagger UI: pick an example and click **Execute** |
+| [/redoc](https://astra.quick2query.com/redoc) | Print-friendly reference |
+| [/health](https://astra.quick2query.com/health) | Liveness and version |
+| [/model](https://astra.quick2query.com/model) | Served model, MD5 and test metrics |
+
+```bash
+curl -X POST https://astra.quick2query.com/predict   -H "Content-Type: application/json"   -d '{"records": [{"Hour": 5, "HR": 104, "Temp": 38.6, "Age": 67, "Gender": 1, "ICULOS": 6}]}'
+
+make smoke API_URL=https://astra.quick2query.com   # the full end-to-end check
+```
+
+Cloudflare rejects clients that send no User-Agent or the default `Python-urllib` one
+(`403`, error 1010). curl, browsers and `requests` are fine; with `urllib`, set a `User-Agent` header.
 
 ## Using the API
 
@@ -105,11 +149,13 @@ See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk
 
 ## Team
 
-| Member | GitHub |
-|--------|--------|
-| Santiago Romagosa | [@Santi-49](https://github.com/Santi-49) |
-| Pablo Fernández | [@FernanESP0](https://github.com/FernanESP0) |
-| Elena Solà | [@elenasola](https://github.com/elenasola) |
-| Júlia Camús | [@julietaa6](https://github.com/julietaa6) |
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/Santi-49"><img src="https://github.com/Santi-49.png?size=100" width="80" alt=""><br><sub><b>Santiago Romagosa</b></sub></a><br><sub>@Santi-49</sub></td>
+    <td align="center"><a href="https://github.com/FernanESP0"><img src="https://github.com/FernanESP0.png?size=100" width="80" alt=""><br><sub><b>Pablo Fernández</b></sub></a><br><sub>@FernanESP0</sub></td>
+    <td align="center"><a href="https://github.com/elenasola"><img src="https://github.com/elenasola.png?size=100" width="80" alt=""><br><sub><b>Elena Solà</b></sub></a><br><sub>@elenasola</sub></td>
+    <td align="center"><a href="https://github.com/julietaa6"><img src="https://github.com/julietaa6.png?size=100" width="80" alt=""><br><sub><b>Júlia Camús</b></sub></a><br><sub>@julietaa6</sub></td>
+  </tr>
+</table>
 
 Licensed under [MIT](LICENSE).
