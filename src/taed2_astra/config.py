@@ -4,6 +4,7 @@ Single place that knows the repository layout. Import from here instead of
 building paths by hand, so moving a folder is a one-line change.
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -45,6 +46,18 @@ def load_params(path: Path = PARAMS_PATH) -> dict:
     """Return params.yaml as a plain dict."""
     with open(path, encoding="utf-8") as handle:
         return yaml.safe_load(handle)
+
+
+def write_json(path: Path, data: dict) -> None:
+    """Write ``data`` as indented JSON with LF line endings and a final newline.
+
+    Left to the platform default, Windows writes CRLF, but Git stores these files with LF
+    (.gitattributes), so dvc.lock would record a hash no clone can reproduce.
+    The final newline keeps pre-commit's end-of-file-fixer from rewriting the file.
+    """
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2, default=str)
+        handle.write("\n")
 
 
 def get_tracking_uri(params: dict) -> str:

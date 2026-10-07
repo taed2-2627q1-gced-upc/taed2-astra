@@ -6,8 +6,6 @@ dataset. The model and its preprocessing never see an AIF360 object, and neither
 does the API: serving does not import this module.
 """
 
-import json
-
 import mlflow
 import numpy as np
 import pandas as pd
@@ -24,6 +22,7 @@ from taed2_astra.config import (
     get_logger,
     get_tracking_uri,
     load_params,
+    write_json,
 )
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.predict import load_model
@@ -155,9 +154,7 @@ def main() -> None:
     report = audit(x_test, y_test, (proba >= params["evaluate"]["threshold"]).astype(int), params)
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(FAIRNESS_PATH, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(FAIRNESS_PATH, report)
 
     mlflow.set_tracking_uri(get_tracking_uri(params))
     mlflow.set_experiment(params["mlflow"]["experiment_name"])

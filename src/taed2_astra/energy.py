@@ -119,7 +119,7 @@ def write_front_matter(path: Path, metadata: dict) -> None:
         body = text[end + len("\n---\n") :].lstrip("\n")
     front.update(metadata)
     dumped = yaml.safe_dump(front, sort_keys=False, allow_unicode=True, width=100)
-    path.write_text(f"---\n{dumped}---\n\n{body}", encoding="utf-8")
+    path.write_text(f"---\n{dumped}---\n\n{body}", encoding="utf-8", newline="\n")  # LF, as Git stores it
 
 
 def main() -> None:

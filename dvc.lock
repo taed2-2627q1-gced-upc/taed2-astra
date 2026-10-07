@@ -49,8 +49,8 @@ stages:
       size: 13834675
     - path: src/taed2_astra/data/validate.py
       hash: md5
-      md5: 43a135fa03cea9a941f9122183b4b16b
-      size: 7429
+      md5: b0d7f2f98250b12adce76aa66c87cf25
+      size: 7277
     params:
       params.yaml:
         dataset:
@@ -224,24 +224,24 @@ stages:
       size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: bfb582a10652c7483d4d74ce2568e7ac
+      size: 5637
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/benchmark.py
       hash: md5
-      md5: 218539e54eee737ceb6d900bd3f9d488
-      size: 9408
+      md5: 22e961d1600a25077c9cb50f66016352
+      size: 9228
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 856efafe9a1f83cc68b214efd6afd863
-      size: 3234
+      md5: 33d8b9e0fbc98bd543acf4ce428b1747
+      size: 3066
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 7a0c5bdb8183d7f6e5e065c2fd42b9dc
-      size: 7950
+      md5: 2fb86b5f4ef64c03aa0708eece5656d7
+      size: 7782
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
       md5: 7b7f0e82eff46b4eb9d64c2611eba3af
@@ -318,8 +318,8 @@ stages:
     outs:
     - path: metrics/benchmark.json
       hash: md5
-      md5: 05ea7f0e4f030c9d3e30322e028d057b
-      size: 4746
+      md5: 1bef834d8de5f90f9918708db641316b
+      size: 4632
   train:
     cmd: python -X utf8 -m taed2_astra.modeling.train
     deps:
@@ -333,16 +333,16 @@ stages:
       size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: bfb582a10652c7483d4d74ce2568e7ac
+      size: 5637
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 7a0c5bdb8183d7f6e5e065c2fd42b9dc
-      size: 7950
+      md5: 2fb86b5f4ef64c03aa0708eece5656d7
+      size: 7782
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
       md5: 7b7f0e82eff46b4eb9d64c2611eba3af
@@ -426,16 +426,16 @@ stages:
       size: 1110933
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: bfb582a10652c7483d4d74ce2568e7ac
+      size: 5637
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 856efafe9a1f83cc68b214efd6afd863
-      size: 3234
+      md5: 33d8b9e0fbc98bd543acf4ce428b1747
+      size: 3066
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
       md5: 0d26a3483ebba3555172477bc644715a
@@ -458,8 +458,8 @@ stages:
     outs:
     - path: metrics/metrics.json
       hash: md5
-      md5: 372eae0e3c795d6b8102450e74620239
-      size: 453
+      md5: 6d2175009d5811eda105970d327cf898
+      size: 440
   co2_report:
     cmd: python -X utf8 -m taed2_astra.energy
     deps:
@@ -469,20 +469,20 @@ stages:
       size: 13834675
     - path: metrics/metrics.json
       hash: md5
-      md5: 372eae0e3c795d6b8102450e74620239
-      size: 453
+      md5: 6d2175009d5811eda105970d327cf898
+      size: 440
     - path: models/model.pkl
       hash: md5
       md5: 36fc5a13ebad684577a7e02442c79a2e
       size: 1110933
     - path: reports/emissions/emissions.csv
       hash: md5
-      md5: 3df842538dd390bf7e156ffda7e71879
-      size: 7262
+      md5: b5c3794e66a4ffa75687fbb90df9ac23
+      size: 7255
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: bfb582a10652c7483d4d74ce2568e7ac
+      size: 5637
     params:
       params.yaml:
         model_card:
@@ -496,8 +496,8 @@ stages:
     deps:
     - path: reports/emissions/emissions.csv
       hash: md5
-      md5: 3df842538dd390bf7e156ffda7e71879
-      size: 7262
+      md5: b5c3794e66a4ffa75687fbb90df9ac23
+      size: 7255
     - path: src/taed2_astra/visualization/plots.py
       hash: md5
       md5: 937013c8d270308932bf4c479552ed1c
@@ -528,8 +528,8 @@ stages:
       size: 1925
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 7a0c5bdb8183d7f6e5e065c2fd42b9dc
-      size: 7950
+      md5: 2fb86b5f4ef64c03aa0708eece5656d7
+      size: 7782
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
       md5: 0d26a3483ebba3555172477bc644715a
@@ -558,5 +558,5 @@ stages:
     outs:
     - path: metrics/fairness.json
       hash: md5
-      md5: 7264dce63fb2eb266059c3412224d5fb
-      size: 916
+      md5: bf260eadbaac9845e665a52d8043bc00
+      size: 892

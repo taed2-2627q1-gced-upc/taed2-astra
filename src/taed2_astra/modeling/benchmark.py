@@ -5,7 +5,6 @@ hyperparameters, fold metrics, latency, size, emissions and fitted artifact, so
 the tracking UI can sort candidates by any column. The test split is never read.
 """
 
-import json
 import pickle
 import statistics
 import time
@@ -25,6 +24,7 @@ from taed2_astra.config import (
     get_logger,
     get_tracking_uri,
     load_params,
+    write_json,
 )
 from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
@@ -201,9 +201,7 @@ def main() -> None:
         row["candidate"]: {key: value for key, value in row.items() if key not in ("candidate", "is_ensemble")}
         for row in matrix.to_dict(orient="records")
     }
-    with open(BENCHMARK_PATH, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, default=str)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(BENCHMARK_PATH, report)
     log.info("Ranked by %s:\n%s", rank_by, matrix[["candidate", f"{rank_by}_mean", "latency_ms_per_1k_rows"]])
 
 
