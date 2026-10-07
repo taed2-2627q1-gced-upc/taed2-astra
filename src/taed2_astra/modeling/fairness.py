@@ -6,12 +6,15 @@ dataset. The model and its preprocessing never see an AIF360 object, and neither
 does the API: serving does not import this module.
 """
 
+import inspect
+
 import mlflow
 import numpy as np
 import pandas as pd
 from aif360.algorithms.preprocessing import Reweighing
 from aif360.datasets import BinaryLabelDataset
 from aif360.metrics import ClassificationMetric
+from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import has_fit_parameter
 
@@ -134,12 +137,24 @@ def sample_weights(x: pd.DataFrame, y: pd.Series, params: dict) -> np.ndarray | 
     return reweighed.instance_weights
 
 
+def takes_sample_weight(estimator: BaseEstimator) -> bool:
+    """Return whether fit() can honour sample_weight, members included for ensembles.
+
+    VotingClassifier and StackingClassifier take ``**fit_params`` rather than a named
+    sample_weight, and pass the weights on to every member, so each member must take them too.
+    """
+    members = [member for _, member in getattr(estimator, "estimators", [])]
+    forwards = any(p.kind is p.VAR_KEYWORD for p in inspect.signature(estimator.fit).parameters.values())
+    accepts = has_fit_parameter(estimator, "sample_weight") or (bool(members) and forwards)
+    return accepts and all(takes_sample_weight(member) for member in members)
+
+
 def fit_params(model: Pipeline, weights: np.ndarray | None) -> dict:
     """Return the fit() keyword arguments that route training weights to the pipeline's estimator."""
     if weights is None:
         return {}
     estimator = model.named_steps["estimator"]
-    if not has_fit_parameter(estimator, "sample_weight"):
+    if not takes_sample_weight(estimator):
         raise ValueError(f"{type(estimator).__name__} takes no sample_weight, so Reweighing cannot train it.")
     return {"estimator__sample_weight": weights}
 

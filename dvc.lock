@@ -224,8 +224,8 @@ stages:
       size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: bfb582a10652c7483d4d74ce2568e7ac
-      size: 5637
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
@@ -240,8 +240,8 @@ stages:
       size: 3066
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 2fb86b5f4ef64c03aa0708eece5656d7
-      size: 7782
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
       md5: 7b7f0e82eff46b4eb9d64c2611eba3af
@@ -333,16 +333,16 @@ stages:
       size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: bfb582a10652c7483d4d74ce2568e7ac
-      size: 5637
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 2fb86b5f4ef64c03aa0708eece5656d7
-      size: 7782
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
       md5: 7b7f0e82eff46b4eb9d64c2611eba3af
@@ -426,8 +426,8 @@ stages:
       size: 1110933
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: bfb582a10652c7483d4d74ce2568e7ac
-      size: 5637
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
@@ -438,8 +438,8 @@ stages:
       size: 3066
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
-      md5: 0d26a3483ebba3555172477bc644715a
-      size: 1259
+      md5: 775e955dea55905aabaffb5b67cca400
+      size: 1401
     params:
       params.yaml:
         dataset:
@@ -481,8 +481,8 @@ stages:
       size: 7255
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: bfb582a10652c7483d4d74ce2568e7ac
-      size: 5637
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     params:
       params.yaml:
         model_card:
@@ -528,12 +528,12 @@ stages:
       size: 1925
     - path: src/taed2_astra/modeling/fairness.py
       hash: md5
-      md5: 2fb86b5f4ef64c03aa0708eece5656d7
-      size: 7782
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
-      md5: 0d26a3483ebba3555172477bc644715a
-      size: 1259
+      md5: 775e955dea55905aabaffb5b67cca400
+      size: 1401
     params:
       params.yaml:
         dataset:

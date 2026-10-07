@@ -124,12 +124,16 @@ def test_reweighing_refuses_an_incomplete_attribute(skewed):
         sample_weights(x, y, make_params())
 
 
-def test_weights_reach_the_estimator(skewed):
-    """The weights must change the fitted model; a routing mistake would make the mitigation a silent no-op."""
+@pytest.mark.parametrize("candidate", ["logistic_regression", "ensemble_soft", "ensemble_stacking"])
+def test_weights_reach_the_estimator(skewed, candidate):
+    """The weights must change the fitted model; a routing mistake would make the mitigation a silent no-op.
+
+    Ensembles take **fit_params instead of a named sample_weight, so a signature check alone would reject them.
+    """
     x, y = skewed
     weights = sample_weights(x, y, make_params())
-    plain = build_model("logistic_regression", load_params()["train"]).fit(x, y)
-    weighted = build_model("logistic_regression", load_params()["train"])
+    plain = build_model(candidate, load_params()["train"]).fit(x, y)
+    weighted = build_model(candidate, load_params()["train"])
     weighted.fit(x, y, **fit_params(weighted, weights))
     assert not np.allclose(plain.predict_proba(x), weighted.predict_proba(x))
 
