@@ -5,7 +5,6 @@ hyperparameters, fold metrics, latency, size, emissions and fitted artifact, so
 the tracking UI can sort candidates by any column. The test split is never read.
 """
 
-import json
 import pickle
 import statistics
 import time
@@ -25,10 +24,12 @@ from taed2_astra.config import (
     get_logger,
     get_tracking_uri,
     load_params,
+    write_json,
 )
 from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.evaluate import compute_metrics
+from taed2_astra.modeling.fairness import fit_params, sample_weights
 from taed2_astra.modeling.registry import build_model, is_ensemble
 
 log = get_logger(__name__)
@@ -55,8 +56,10 @@ def cross_validate_candidate(
     model = build_model(name, params["train"])
     for train_idx, val_idx in folds:
         model = build_model(name, params["train"])
+        # Weights come from the fold's own training rows, so the validation fold never shapes them.
+        weights = sample_weights(x.iloc[train_idx], y.iloc[train_idx], params)
         start = time.perf_counter()
-        model.fit(x.iloc[train_idx], y.iloc[train_idx])
+        model.fit(x.iloc[train_idx], y.iloc[train_idx], **fit_params(model, weights))
         fit_times.append(time.perf_counter() - start)
         proba = model.predict_proba(x.iloc[val_idx])[:, 1]
         per_fold.append(compute_metrics(y.iloc[val_idx], (proba >= threshold).astype(int), proba))
@@ -114,8 +117,9 @@ def _run_candidate(name: str, params: dict, x: pd.DataFrame, y: pd.Series, folds
     mlflow.set_tags({"candidate": name, "estimator": spec["estimator"], "dataset": params["dataset"]["name"]})
     mlflow.log_params({"random_state": params["train"]["random_state"], **spec})
     try:
-        build_model(name, params["train"])  # fail fast on missing optional dependencies
-    except ImportError as error:
+        model = build_model(name, params["train"])  # fail fast on missing optional dependencies...
+        fit_params(model, sample_weights(x, y, params))  # ...and on estimators the mitigation cannot train
+    except (ImportError, ValueError) as error:
         log.warning("Skipping %s: %s", name, error)
         mlflow.set_tags({"status": "skipped", "reason": str(error)})
         return None
@@ -197,9 +201,7 @@ def main() -> None:
         row["candidate"]: {key: value for key, value in row.items() if key not in ("candidate", "is_ensemble")}
         for row in matrix.to_dict(orient="records")
     }
-    with open(BENCHMARK_PATH, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, default=str)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(BENCHMARK_PATH, report)
     log.info("Ranked by %s:\n%s", rank_by, matrix[["candidate", f"{rank_by}_mean", "latency_ms_per_1k_rows"]])
 
 

@@ -11,13 +11,19 @@ patient-disjointness of the splits is checked here too, since a leak between
 them would inflate every metric downstream without any error being raised.
 """
 
-import json
-
 import great_expectations as gx
 import pandas as pd
 from great_expectations.expectations.metadata_types import FailureSeverity
 
-from taed2_astra.config import REPORTS_DIR, TEST_PATH, TRAIN_PATH, VALIDATION_PATH, get_logger, load_params
+from taed2_astra.config import (
+    REPORTS_DIR,
+    TEST_PATH,
+    TRAIN_PATH,
+    VALIDATION_PATH,
+    get_logger,
+    load_params,
+    write_json,
+)
 
 log = get_logger(__name__)
 
@@ -148,9 +154,7 @@ def main() -> None:
     report = build_report(splits, params["dataset"], params["validation"])
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(VALIDATION_PATH, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, default=str)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(VALIDATION_PATH, report)
 
     for warning in report["warnings"]:
         log.warning("Data quality warning: %s", warning)

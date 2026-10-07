@@ -12,8 +12,9 @@ import pandas as pd
 import pytest
 from sklearn.metrics import average_precision_score, recall_score, roc_auc_score
 
-from taed2_astra.config import METRICS_PATH, MODEL_PATH, TEST_PATH, load_params
+from taed2_astra.config import FAIRNESS_PATH, METRICS_PATH, MODEL_PATH, TEST_PATH, load_params
 from taed2_astra.features.build_features import split_xy
+from taed2_astra.modeling.fairness import audit
 from taed2_astra.modeling.predict import load_model
 
 pytestmark = [
@@ -68,6 +69,36 @@ def test_no_subgroup_is_served_much_worse(scored, column):
     assert len(scores) >= 2, f"Not enough labelled groups in {column} to compare"
     gap = max(scores.values()) - min(scores.values())
     assert gap <= GATES["max_slice_roc_auc_gap"], f"ROC-AUC by {column}: {scores}"
+
+
+@pytest.fixture(name="fairness", scope="module")
+def fairness_fixture(scored) -> dict[str, dict[str, float]]:
+    """AIF360 group metrics of the shipped model's decisions, per protected attribute."""
+    x, y, proba = scored
+    return audit(x, y, (proba >= PARAMS["evaluate"]["threshold"]).astype(int), PARAMS)
+
+
+@pytest.mark.parametrize("attribute", PARAMS["fairness"]["attributes"])
+def test_missed_sepsis_does_not_concentrate_in_one_group(fairness, attribute):
+    """Equal opportunity: a septic patient's chance of being flagged must not depend on sex or age group."""
+    gap = fairness[attribute]["equal_opportunity_difference"]
+    assert abs(gap) <= GATES["max_equal_opportunity_gap"], f"Recall gap by {attribute}: {gap:+.4f}"
+
+
+@pytest.mark.parametrize("attribute", PARAMS["fairness"]["attributes"])
+def test_error_rates_are_balanced_across_groups(fairness, attribute):
+    """Average odds: recall and false-alarm rate together, so one group is not traded off against another."""
+    gap = fairness[attribute]["average_odds_difference"]
+    assert abs(gap) <= GATES["max_average_odds_gap"], f"Average odds gap by {attribute}: {gap:+.4f}"
+
+
+def test_fairness_file_matches_the_model_on_disk(fairness):
+    """metrics/fairness.json must describe this model, or the model card is quoting a stale audit."""
+    with open(FAIRNESS_PATH, encoding="utf-8") as handle:
+        recorded = json.load(handle)
+    assert recorded.keys() == fairness.keys()
+    for attribute, metrics in fairness.items():
+        assert recorded[attribute] == pytest.approx(metrics, abs=1e-9)
 
 
 @pytest.mark.parametrize(("column", "shift"), GATES["directional"].items())

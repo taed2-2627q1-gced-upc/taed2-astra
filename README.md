@@ -159,4 +159,65 @@ See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk
   </tr>
 </table>
 
+`.env` is gitignored and loaded automatically. Never commit a token; tokens are
+personal, not shared team-wide. The DagsHub URLs in `.dvc/config` and
+`params.yaml` are public and safe to track.
+
+To log runs locally instead of to DagsHub, set `MLFLOW_TRACKING_URI=sqlite:///mlflow.db`
+in `.env` — it overrides `params.yaml` without editing a DVC-tracked file.
+Browse them with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
+
+## Workflow
+
+**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate → fairness, co2_report}`
+and `plots`, skipping any stage whose dependencies and params are unchanged. After a
+repro, `dvc push` before opening a pull request, so teammates and CI can pull what
+`dvc.lock` points at.
+
+**Quality assurance** — `make qa` runs what CI runs: ruff and pylint, the pytest suite
+with a coverage floor, and Pynblint. The `validate` stage applies a Great Expectations
+data contract (`params.yaml: validation`) to both splits, and
+`tests/test_model_quality.py` applies release gates (`params.yaml: model_quality`) to
+the trained model, including AIF360 group-fairness gates on `Gender` and `Age`
+(`params.yaml: fairness`, audited by the `fairness` stage into `metrics/fairness.json`). See [AGENTS.md](AGENTS.md#ci-and-branch-protection) for the CI checks
+that protect `main`.
+
+**Model selection** — `benchmark` scores every candidate listed in
+`params.yaml` (`benchmark.models`) on the same patient-grouped CV folds and
+writes the ranking to `metrics/benchmark.json`. `train.model` picks the
+candidate that ships. Promote one with `dvc exp run -S train.model=<name>`;
+iterate quickly with `-S benchmark.max_rows=200000`. The `tabpfn` candidate
+(Hugging Face `Prior-Labs/TabPFN-v2-clf`) needs `uv sync --group foundation`
+and is skipped otherwise.
+
+**Experiments** — browse runs on the DagsHub MLflow tab. The benchmark logs one
+nested run per candidate (params, mean/std metrics, latency, model size,
+emissions, model artifact); training logs the shipped model the same way.
+
+**Sustainability figures** — run `uv run astra-plots` to regenerate the
+benchmark energy bar chart and duration-vs-energy scatter plot in
+`reports/figures/` from `reports/emissions/emissions.csv`.
+
+**API** — `make api`, then open <http://127.0.0.1:8000/docs>.
+
+**Data** — `dvc pull` / `dvc push`. Never `git add` anything under `data/` or
+`models/`.
+
+See [AGENTS.md](AGENTS.md) for branching, commit and review conventions, and
+[docs/](docs/) for the dataset and model cards.
+
+## Tooling
+
+| Concern | Tool |
+|---------|------|
+| Code versioning | Git + GitHub Flow |
+| Data versioning | DVC |
+| Experiment tracking | MLflow |
+| Data validation | Great Expectations |
+| Testing | Pytest (+ pytest-cov) |
+| Linting and formatting | Ruff, Pylint |
+| Notebook and repository quality | Pynblint |
+| Sustainability | CodeCarbon |
+| CI and branch protection | GitHub Actions + repository ruleset |
+| Serving | FastAPI |
 Licensed under [MIT](LICENSE).

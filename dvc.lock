@@ -49,8 +49,8 @@ stages:
       size: 13834675
     - path: src/taed2_astra/data/validate.py
       hash: md5
-      md5: 43a135fa03cea9a941f9122183b4b16b
-      size: 7429
+      md5: b0d7f2f98250b12adce76aa66c87cf25
+      size: 7277
     params:
       params.yaml:
         dataset:
@@ -220,28 +220,32 @@ stages:
       size: 13834675
     - path: reports/data_validation.json
       hash: md5
-      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
-      size: 3754
+      md5: 6543e84b59e7065d500c76f3383724be
+      size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/benchmark.py
       hash: md5
-      md5: 26159da564843304d3643b176641994d
-      size: 8765
+      md5: 22e961d1600a25077c9cb50f66016352
+      size: 9228
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 856efafe9a1f83cc68b214efd6afd863
-      size: 3234
+      md5: 33d8b9e0fbc98bd543acf4ce428b1747
+      size: 3066
+    - path: src/taed2_astra/modeling/fairness.py
+      hash: md5
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
-      md5: 3698a6a30003be0e612c0ee5fd557525
-      size: 5300
+      md5: 7b7f0e82eff46b4eb9d64c2611eba3af
+      size: 5678
     params:
       params.yaml:
         benchmark:
@@ -267,6 +271,17 @@ stages:
           drop:
           - 'Unnamed: 0'
         evaluate.threshold: 0.5
+        fairness:
+          favorable_label: 1
+          attributes:
+            Gender:
+              privileged: 1
+            Age:
+              cutoff: 65
+              privileged: 0
+          mitigation:
+            method: none
+            attribute: Gender
         train:
           random_state: 42
           model: hist_gradient_boosting
@@ -303,8 +318,8 @@ stages:
     outs:
     - path: metrics/benchmark.json
       hash: md5
-      md5: 0c9cb6c12d8fea273587aa4e2202581d
-      size: 4748
+      md5: 1bef834d8de5f90f9918708db641316b
+      size: 4632
   train:
     cmd: python -X utf8 -m taed2_astra.modeling.train
     deps:
@@ -314,24 +329,28 @@ stages:
       size: 13834675
     - path: reports/data_validation.json
       hash: md5
-      md5: bc4772a5df2c45a6bd7dcb06a281d0a9
-      size: 3754
+      md5: 6543e84b59e7065d500c76f3383724be
+      size: 40436
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
+    - path: src/taed2_astra/modeling/fairness.py
+      hash: md5
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
-      md5: 3698a6a30003be0e612c0ee5fd557525
-      size: 5300
+      md5: 7b7f0e82eff46b4eb9d64c2611eba3af
+      size: 5678
     - path: src/taed2_astra/modeling/train.py
       hash: md5
-      md5: b26d934a6b062d87384083bb10d15d48
-      size: 3599
+      md5: 080e1fabb73698390d9f559fd3eeb5d7
+      size: 3836
     params:
       params.yaml:
         dataset:
@@ -345,6 +364,17 @@ stages:
           group: Patient_ID
           drop:
           - 'Unnamed: 0'
+        fairness:
+          favorable_label: 1
+          attributes:
+            Gender:
+              privileged: 1
+            Age:
+              cutoff: 65
+              privileged: 0
+          mitigation:
+            method: none
+            attribute: Gender
         train:
           random_state: 42
           model: hist_gradient_boosting
@@ -381,7 +411,7 @@ stages:
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: 4728f865299ee181f789f2f36b0a88ea
+      md5: 36fc5a13ebad684577a7e02442c79a2e
       size: 1110933
   evaluate:
     cmd: python -X utf8 -m taed2_astra.modeling.evaluate
@@ -392,24 +422,24 @@ stages:
       size: 3461516
     - path: models/model.pkl
       hash: md5
-      md5: 4728f865299ee181f789f2f36b0a88ea
+      md5: 36fc5a13ebad684577a7e02442c79a2e
       size: 1110933
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
       size: 1925
     - path: src/taed2_astra/modeling/evaluate.py
       hash: md5
-      md5: 856efafe9a1f83cc68b214efd6afd863
-      size: 3234
+      md5: 33d8b9e0fbc98bd543acf4ce428b1747
+      size: 3066
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
-      md5: 0d26a3483ebba3555172477bc644715a
-      size: 1259
+      md5: 775e955dea55905aabaffb5b67cca400
+      size: 1401
     params:
       params.yaml:
         dataset:
@@ -428,8 +458,8 @@ stages:
     outs:
     - path: metrics/metrics.json
       hash: md5
-      md5: b717ba1a825feeec85cb92f27a392bad
-      size: 453
+      md5: 6d2175009d5811eda105970d327cf898
+      size: 440
   co2_report:
     cmd: python -X utf8 -m taed2_astra.energy
     deps:
@@ -439,20 +469,20 @@ stages:
       size: 13834675
     - path: metrics/metrics.json
       hash: md5
-      md5: b717ba1a825feeec85cb92f27a392bad
-      size: 453
+      md5: 6d2175009d5811eda105970d327cf898
+      size: 440
     - path: models/model.pkl
       hash: md5
-      md5: 4728f865299ee181f789f2f36b0a88ea
+      md5: 36fc5a13ebad684577a7e02442c79a2e
       size: 1110933
     - path: reports/emissions/emissions.csv
       hash: md5
-      md5: 9425d9ca26c9549be5703ee474b574e9
-      size: 3395
+      md5: b5c3794e66a4ffa75687fbb90df9ac23
+      size: 7255
     - path: src/taed2_astra/energy.py
       hash: md5
-      md5: b43e0f65ce7fbd75872c8316cd993ec1
-      size: 5599
+      md5: ea19cc61b4c2eca3265d88e8245cb34d
+      size: 5934
     params:
       params.yaml:
         model_card:
@@ -466,8 +496,8 @@ stages:
     deps:
     - path: reports/emissions/emissions.csv
       hash: md5
-      md5: 6952d3c53fb1b180b05beb6e8fe00691
-      size: 3388
+      md5: b5c3794e66a4ffa75687fbb90df9ac23
+      size: 7255
     - path: src/taed2_astra/visualization/plots.py
       hash: md5
       md5: 937013c8d270308932bf4c479552ed1c
@@ -475,9 +505,58 @@ stages:
     outs:
     - path: reports/figures/duration_vs_energy.png
       hash: md5
-      md5: d553da2c4651ee2c49b9815ec4b79cf3
-      size: 45602
+      md5: 1900e415e18eb471555984d75fc0a849
+      size: 45197
     - path: reports/figures/energy_consumed_per_model.png
       hash: md5
-      md5: 1f00432e98302e82b056122a8ef5cb9e
-      size: 47522
+      md5: afdc02722d98da1af75dbec1f9a20acc
+      size: 48568
+  fairness:
+    cmd: python -X utf8 -m taed2_astra.modeling.fairness
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
+    - path: models/model.pkl
+      hash: md5
+      md5: 36fc5a13ebad684577a7e02442c79a2e
+      size: 1110933
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/fairness.py
+      hash: md5
+      md5: 8b4f4c56c289bba58cfd25ab6951630a
+      size: 8512
+    - path: src/taed2_astra/modeling/predict.py
+      hash: md5
+      md5: 775e955dea55905aabaffb5b67cca400
+      size: 1401
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        evaluate.threshold: 0.5
+        fairness.attributes:
+          Gender:
+            privileged: 1
+          Age:
+            cutoff: 65
+            privileged: 0
+        fairness.favorable_label: 1
+    outs:
+    - path: metrics/fairness.json
+      hash: md5
+      md5: bf260eadbaac9845e665a52d8043bc00
+      size: 892

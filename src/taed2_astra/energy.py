@@ -11,6 +11,7 @@ Hugging Face ``co2_eq_emissions`` metadata at the top of docs/model_card.md.
 """
 
 import json
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -70,7 +71,11 @@ def _hardware(run: pd.Series) -> str:
     hardware = f"{int(run['cpu_count'])} x {run['cpu_model']} (CPU)"
     gpu_count = run.get("gpu_count")
     if pd.notna(gpu_count) and gpu_count:
-        hardware += f", {int(gpu_count)} x {run['gpu_model']} (GPU)"
+        gpu = str(run["gpu_model"])
+        # CodeCarbon 3.x already writes the count into gpu_model ("1 x NVIDIA ..."); add it only when missing.
+        if not re.match(r"\d+ x ", gpu):
+            gpu = f"{int(gpu_count)} x {gpu}"
+        hardware += f", {gpu} (GPU)"
     return hardware
 
 
@@ -125,7 +130,7 @@ def write_front_matter(path: Path, metadata: dict) -> None:
         body = text[end + len("\n---\n") :].lstrip("\n")
     front.update(metadata)
     dumped = yaml.safe_dump(front, sort_keys=False, allow_unicode=True, width=100)
-    path.write_text(f"---\n{dumped}---\n\n{body}", encoding="utf-8")
+    path.write_text(f"---\n{dumped}---\n\n{body}", encoding="utf-8", newline="\n")  # LF, as Git stores it
 
 
 def main() -> None:

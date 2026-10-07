@@ -116,6 +116,10 @@ model_quality:
   min_recall: 0.55                   # at evaluate.threshold: missing a septic patient is the costly error
   slices: [Gender, Unit1]            # subgroups that must not be served much worse than the rest
   max_slice_roc_auc_gap: 0.1
+  # Group fairness over fairness.attributes (AIF360). Only error-rate parity is gated: sepsis
+  # prevalence differs between groups, so parity of the alert rate (disparate impact) is reported, not enforced.
+  max_equal_opportunity_gap: 0.1     # |recall difference|: missed sepsis must not concentrate in one group
+  max_average_odds_gap: 0.1          # |mean of the recall and false-alarm-rate differences|
   # Clinical deterioration must not lower the average predicted risk.
   directional:
     HR: 40
@@ -124,6 +128,21 @@ model_quality:
     MAP: -30
     Lactate: 4
 
+# Group fairness audit (fairness stage) and the optional training-time mitigation (train, benchmark).
+fairness:
+  # An alert brings a clinician to the bedside: for a septic patient, being flagged is the outcome to want.
+  favorable_label: 1
+  # Each attribute is split into the privileged (reference) group and the rest; metrics are rest minus reference.
+  # A cutoff binarises a continuous column first: value >= cutoff becomes 1.
+  attributes:
+    Gender:
+      privileged: 1                  # 1 = male, 0 = female (docs/dataset_card.md)
+    Age:
+      cutoff: 65
+      privileged: 0                  # reference: patients under 65
+  mitigation:
+    method: none                     # none | reweighing (AIF360 pre-processing: per-row training weights)
+    attribute: Gender                # must be complete (validation.complete): every row needs a weight
 # Serving contract. Field types and required fields come from `validation` above.
 api:
   max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 2 GB RAM)
