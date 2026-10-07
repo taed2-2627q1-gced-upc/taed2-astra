@@ -35,7 +35,7 @@ exists, so prefer choices you can justify in the report.
 uv sync
 cp .env.template .env   # fill in your DagsHub token
 uv run pytest           # fast tests run; model release gates skip until a model exists
-uv run dvc pull         # data and model, after the DVC remote setup in the README
+uv run dvc pull         # data and model, after the DVC credentials in docs/development.md
 ```
 
 Use `uv run <cmd>` for everything. Do not `pip install` into the system Python.
@@ -54,7 +54,7 @@ Use `uv run <cmd>` for everything. Do not `pip install` into the system Python.
    to add something there, it is a mistake.
 5. **No secrets in the repo.** DagsHub tokens go in `.env` or
    `.dvc/config.local`, never in a tracked file. Tokens are personal, not
-   shared team-wide. See the README for setup.
+   shared team-wide. See [docs/development.md](docs/development.md#dagshub-credentials).
 6. **A human commits and pushes.** An AI agent may write and stage changes,
    but never runs `git commit` or `git push` and never appears as author or
    co-author. See [Git](#git).
@@ -85,7 +85,10 @@ make test-fast  # only tests that need no data on disk (CI's "Tests" job)
 make lint-nb    # Pynblint on notebooks and repo; fails on any lint
 make qa         # lint + test + lint-nb: run this before opening a pull request
 make repro      # dvc repro
-make api        # uvicorn, docs at /docs
+make api        # uvicorn with reload, docs at /docs
+make serve      # uvicorn as on the VM: one worker, no reload
+make smoke      # end-to-end check of a running API (API_URL=...)
+make deploy     # on the VM only: pull, restart, smoke-test (docs/deployment.md)
 ```
 
 ## Testing

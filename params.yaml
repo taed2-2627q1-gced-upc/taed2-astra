@@ -143,6 +143,137 @@ fairness:
   mitigation:
     method: none                     # none | reweighing (AIF360 pre-processing: per-row training weights)
     attribute: Gender                # must be complete (validation.complete): every row needs a weight
+# Serving contract. Field types and required fields come from `validation` above.
+api:
+  max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 2 GB RAM)
+  access_log_days: 30               # days of logs/access.log kept; client IPs are personal data (GDPR)
+  max_errors: 20                     # a 422 lists at most this many problems: a 0.6 MB request must not get a 6 MB answer
+  # Hard limits per feature: /predict rejects (422) only values that cannot be a real
+  # measurement in the expected unit. They are deliberately wider than validation.ranges,
+  # because the sickest patients are exactly the ones an early-warning model must score:
+  # a value inside these limits but outside validation.ranges is scored and returned with
+  # a warning: the training data was checked against those ranges, so such values are rare in it.
+  # Keys must match validation.ranges.
+  limits:
+    Hour: [0, 10000]                 # hours since ICU admission; stays can last months
+    HR: [0, 350]                     # 0 = asystole; extreme bradycardia must still be scored
+    O2Sat: [0, 100]                  # percent
+    Temp: [10, 47]                   # degrees C; 98.6 is Fahrenheit and is rejected
+    SBP: [0, 350]
+    MAP: [0, 300]
+    DBP: [0, 300]
+    Resp: [0, 100]
+    EtCO2: [0, 150]
+    BaseExcess: [-50, 50]
+    HCO3: [0, 70]
+    FiO2: [0.21, 1.0]                # a fraction: 40 is a percentage and is rejected
+    pH: [6.0, 8.0]
+    PaCO2: [5, 250]
+    SaO2: [0, 100]
+    AST: [0, 50000]
+    BUN: [0, 400]
+    Alkalinephos: [0, 10000]
+    Calcium: [0, 30]
+    Chloride: [0, 200]
+    Creatinine: [0, 60]
+    Bilirubin_direct: [0, 80]
+    Glucose: [0, 3000]               # hyperosmolar states exceed 2000 mg/dL
+    Lactate: [0, 50]
+    Magnesium: [0, 20]
+    Phosphate: [0, 30]
+    Potassium: [0.5, 15]
+    Bilirubin_total: [0, 100]
+    TroponinI: [0, 1000]
+    Hct: [0, 100]                    # percent
+    Hgb: [0, 30]
+    PTT: [5, 500]
+    WBC: [0, 1000]                   # leukaemic counts exceed the training range
+    Fibrinogen: [0, 3000]
+    Platelets: [0, 5000]
+    Age: [0, 120]
+    Gender: [0, 1]
+    Unit1: [0, 1]
+    Unit2: [0, 1]
+    HospAdmTime: [-100000, 100]      # hours from hospital to ICU admission
+    ICULOS: [1, 10000]
+  # Relations between fields, checked whenever every field in a rule is sent. A broken one is
+  # scored with a warning, not rejected: it is almost always a charting error, and the record
+  # still describes a real patient. Share of train.parquet rows that break each rule is noted.
+  ordered:                           # [low, high]: low must not exceed high
+    - [DBP, MAP]                     # 0.64 %
+    - [MAP, SBP]                     # 0.09 %
+    - [DBP, SBP]                     # 0.01 %
+    - [Bilirubin_direct, Bilirubin_total]  # 0.14 %
+    - [Hour, ICULOS]                 # 0 %: ICULOS counts from 1, Hour from 0
+  one_hot:                           # exactly one field of each group is 1
+    - [Unit1, Unit2]                 # 0 %: every patient is in exactly one ICU type
+  # Named patient-hours offered in the /docs "Try it out" dropdown. The first one is also the
+  # default request body. Tests check that every example is accepted by the contract.
+  examples:
+    deteriorating:
+      summary: High risk - deteriorating patient
+      description: Fever, tachycardia, fast breathing, low MAP, raised lactate and WBC, on oxygen.
+      record:
+        Hour: 5
+        HR: 104
+        O2Sat: 94
+        Temp: 38.6
+        SBP: 102
+        MAP: 68
+        DBP: 52
+        Resp: 26
+        FiO2: 0.4
+        Lactate: 3.1
+        WBC: 15.2
+        Creatinine: 1.4
+        Platelets: 140
+        Age: 67
+        Gender: 1
+        Unit1: 1
+        Unit2: 0
+        HospAdmTime: -12.5
+        ICULOS: 6
+    stable:
+      summary: Low risk - stable patient
+      description: Normal vitals and labs on room air, three hours into the ICU stay.
+      record:
+        Hour: 2
+        HR: 72
+        O2Sat: 98
+        Temp: 36.8
+        SBP: 125
+        MAP: 88
+        DBP: 70
+        Resp: 15
+        FiO2: 0.21
+        Lactate: 1.0
+        WBC: 7.5
+        Creatinine: 0.9
+        Platelets: 250
+        Age: 45
+        Gender: 0
+        Unit1: 0
+        Unit2: 1
+        HospAdmTime: -2.0
+        ICULOS: 3
+    minimal:
+      summary: Only the required fields
+      description: Every unmeasured value is left out; the model imputes it.
+      record:
+        Hour: 2
+        Age: 45
+        Gender: 0
+        ICULOS: 3
+    bradycardia:
+      summary: Extreme value - scored with a warning
+      description: HR 19 is possible but below the training range, so the risk comes back with a warning.
+      record:
+        Hour: 5
+        HR: 19
+        Temp: 38.6
+        Age: 67
+        Gender: 1
+        ICULOS: 6
 
 mlflow:
   experiment_name: taed2-astra

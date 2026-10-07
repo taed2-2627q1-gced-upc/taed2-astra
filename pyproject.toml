@@ -121,13 +121,16 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # Asserting on literal HTTP status codes is clearer than naming a constant.
-"tests/**" = ["PLR2004"]
+# Fixture docstrings name what the fixture provides ("A test client ..."), not an action (D401).
+"tests/**" = ["PLR2004", "D401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["taed2_astra"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"
+# NumPy style (Parameters / Returns / Raises), as in the course demos. FastAPI renders
+# the dashed section underlines as headings in /docs.
+convention = "numpy"
 
 # Pylint complements ruff with semantic checks (design limits, class attributes,
 # name resolution across modules) and a global score we track over time.
@@ -159,5 +162,5 @@ branch = true
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
-# A ratchet, not a target: CI measures 59 % without data on disk. Raise it as tests land; never lower it.
-fail_under = 55
+# A ratchet, not a target: CI measures 63 % without data on disk. Raise it as tests land; never lower it.
+fail_under = 60
