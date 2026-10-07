@@ -5,8 +5,7 @@ co2_eq_emissions:
   source: CodeCarbon 3.3.1 (EmissionsTracker), reports/emissions/emissions.csv
   training_type: pre-training
   geographical_location: catalonia, Spain
-  hardware_used: 12 x Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz (CPU), 1 x 1 x NVIDIA GeForce GTX 1650
-    (GPU)
+  hardware_used: 12 x Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz (CPU), 1 x NVIDIA GeForce GTX 1650 (GPU)
   training_time: 93.2
   optimization_techniques: histogram-based gradient boosting (binned features); ensembles rejected because
     their extra energy bought no meaningful PR-AUC gain
@@ -145,11 +144,14 @@ Definitions live in `params.yaml: fairness`:
   equal alert rate would mean *over*-alerting one group. Only error-rate parity (equal
   opportunity, average odds) is enforced.
 - **Mitigation available, not shipped.** `fairness.mitigation.method: reweighing` trains with
-  AIF360 Reweighing weights on `Gender`. In a one-off check against this test split it
-  roughly halved the gaps (equal opportunity −0.042 → −0.023, average odds −0.032 → −0.016,
-  disparate impact 0.871 → 0.937). Overall recall moved 0.638 → 0.622, ROC-AUC 0.809 → 0.807
-  and PR-AUC 0.092 → 0.094. The current gaps already pass the gates, so the unweighted model
-  ships. Group-specific thresholds (post-processing) were rejected: they would make the
+  AIF360 Reweighing weights on `Gender`. It was compared with no mitigation on the benchmark's
+  patient-grouped 3-fold CV over the training split (mean ± std over folds), so the test split
+  played no part in the choice and the table above stays an unbiased final audit. Reweighing
+  narrowed the `Gender` gaps (equal opportunity −0.016 ± 0.061 → −0.004 ± 0.045, average odds
+  −0.019 ± 0.037 → −0.006 ± 0.027, disparate impact 0.859 → 0.938) at no real cost (recall
+  0.556 → 0.551, PR-AUC 0.0898 → 0.0897). The unweighted model ships: its gaps already pass the
+  gates, and the improvement is smaller than the fold-to-fold spread, the same rule that keeps
+  ensembles out. Group-specific thresholds (post-processing) were rejected: they would make the
   served decision depend on the patient's sex.
 
 ## Limitations
