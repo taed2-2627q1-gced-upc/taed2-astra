@@ -122,10 +122,11 @@ Invoke-RestMethod http://127.0.0.1:8000/predict -Method Post -ContentType "appli
 
 ## Input contract
 
-The record schema is generated from `params.yaml: validation`, the same data contract
-Great Expectations enforces on the training data. Serving therefore accepts exactly
-what the model was trained and validated on. Changing a bound in `params.yaml` changes
-both checks at once.
+The record schema is generated from `params.yaml`. Its fields, their types and the
+required ones come from `validation`, the same data contract Great Expectations enforces
+on the training data, so serving accepts exactly the features the model was trained on.
+Its bounds come from `api.limits`, which are deliberately wider than `validation.ranges`
+(see [Hard limits vs. validated range](#hard-limits-vs-validated-range)).
 
 | Rule | Source in `params.yaml` | Example |
 |------|-------------------------|---------|

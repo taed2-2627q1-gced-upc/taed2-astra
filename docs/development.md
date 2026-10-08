@@ -107,7 +107,7 @@ See [AGENTS.md](../AGENTS.md#ci-and-branch-protection) for the CI jobs that prot
 ├── data/              # DVC-tracked, never committed to Git
 │   ├── raw/           # immutable input, exactly as downloaded
 │   └── processed/     # model-ready train/test splits
-├── deploy/            # systemd unit, nginx site, smoke test (see deployment.md)
+├── deploy/            # systemd unit and smoke test (see deployment.md)
 ├── docs/              # cards and guides
 ├── metrics/           # metrics.json, committed so PR diffs show score changes
 ├── models/            # DVC-tracked trained artefacts
@@ -149,4 +149,4 @@ This follows `cookiecutter-data-science` with deliberate deviations:
 | Notebook and repository quality | Pynblint |
 | Sustainability | CodeCarbon |
 | CI and branch protection | GitHub Actions + repository ruleset |
-| Serving | FastAPI + uvicorn, behind nginx, managed by systemd |
+| Serving | FastAPI + uvicorn, managed by systemd, behind a Cloudflare tunnel |

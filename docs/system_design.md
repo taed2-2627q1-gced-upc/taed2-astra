@@ -8,14 +8,19 @@ to the API, and why the design stays this simple. Calling the API is covered in
 
 ![System architecture](images/system_architecture.svg)
 
-Astra has two halves that share one file and one contract:
+Astra has two halves:
 
-- **Training** runs on a laptop or in CI. The DVC pipeline turns the PhysioNet data into
-  `models/model.pkl`, which the release gates test before it is pushed to DagsHub.
-- **Serving** runs on the UPC VM. It downloads that exact file, loads it once at startup
-  and answers requests behind Cloudflare and nginx.
-- **`params.yaml`** defines what a valid patient-hour is. The `validate` stage checks the
-  training data against it, and the API builds its request schema from it.
+- **Training** runs on a developer's laptop. The DVC pipeline turns the PhysioNet data into
+  `models/model.pkl`, which the release gates test before it is pushed to DagsHub. CI does
+  not retrain: on every pull request it re-runs the data contract and the release gates on
+  the pushed model, and checks with `dvc status` that `dvc.lock` matches the code.
+- **Serving** runs on the UPC VM. It gets the model with DVC, and the code, `params.yaml`
+  and `metrics/metrics.json` with Git. It loads them once at startup and answers requests
+  through a Cloudflare tunnel.
+- **`params.yaml`** connects the two. Both sides take the fields, their types and which are
+  required from `validation`. The bounds differ on purpose: training data is checked against
+  `validation.ranges`, while the API rejects only values outside the wider `api.limits` and
+  warns about values outside `validation.ranges`. The API also reads its threshold from it.
 
 <details>
 <summary>Mermaid source</summary>
@@ -24,7 +29,7 @@ Astra has two halves that share one file and one contract:
 flowchart TB
     P[/"params.yaml<br/>schema · data contract · release gates · API limits"/]
 
-    subgraph TRAINING["Training plane · developer laptop or CI"]
+    subgraph TRAINING["Training plane · developer laptop"]
         direction LR
         PREP[prepare] --> VAL["validate<br/>Great Expectations"] --> TRAIN[train] --> EVAL[evaluate] --> CO2["co2_report<br/>plots"]
         VAL --> BENCH[benchmark]
@@ -32,7 +37,7 @@ flowchart TB
     end
 
     M[("models/model.pkl<br/>md5 pinned in dvc.lock")]
-    GATES["Release gates<br/>tests/test_model_quality.py"]
+    GATES["Release gates<br/>tests/test_model_quality.py<br/>locally and in CI"]
 
     subgraph REMOTES["Remotes"]
         direction LR
@@ -42,7 +47,7 @@ flowchart TB
 
     subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 2 GB)"]
         direction LR
-        CFD[cloudflared] --> NGX["nginx :80"] --> UV["uvicorn 127.0.0.1:8000<br/>1 worker · systemd"] --> APP["FastAPI<br/>api/main.py · api/schemas.py"] --> PRED["modeling/predict.py"] --> MV[("models/model.pkl")]
+        CFD[cloudflared] --> UV["uvicorn 127.0.0.1:8000<br/>1 worker · systemd"] --> APP["FastAPI<br/>api/main.py · api/schemas.py"] --> PRED["modeling/predict.py"] --> MV[("models/model.pkl")]
     end
 
     CLIENT(["Client<br/>browser /docs · curl · script"]) -- HTTPS --> CF{{"Cloudflare<br/>astra.quick2query.com"}} -- tunnel --> SERVING
@@ -53,15 +58,12 @@ flowchart TB
     TRAINING -- "runs, metrics (MLflow)" --> DH
     M -- "dvc push" --> DH
     TRAINING -- "git push · pull request" --> GH
-    GH -- "make deploy: git pull" --> SERVING
+    GH -- "make deploy: git pull<br/>code · params.yaml · metrics.json" --> SERVING
     DH -- "dvc pull models/model.pkl" --> SERVING
-    P -. "same contract → Pydantic schema" .-> SERVING
+    P -. "fields and types · api.limits · threshold" .-> SERVING
 ```
 
 </details>
-
-<!-- TODO(team): confirm that cloudflared forwards to nginx on :80 (not straight to uvicorn on
-:8000), and decide whether the tunnel config belongs in deploy/ next to nginx.conf. -->
 
 ## A request, step by step
 
@@ -79,14 +81,12 @@ sequenceDiagram
     autonumber
     actor C as Client
     participant CF as Cloudflare + cloudflared
-    participant N as nginx
     participant A as FastAPI (api/main.py)
     participant S as Pydantic schema (api/schemas.py)
     participant P as predict() (modeling/predict.py)
 
     C->>CF: POST /predict {"records": [...]}
-    CF->>N: forwards, adds CF-Connecting-IP
-    N->>A: proxy to 127.0.0.1:8000
+    CF->>A: forwards to 127.0.0.1:8000, adds CF-Connecting-IP
     A->>S: validate every record
     alt breaks the contract (unknown field, impossible value, wrong type, batch size)
         S-->>A: errors
@@ -107,12 +107,13 @@ sequenceDiagram
 | Decision | Why |
 |----------|-----|
 | **A REST API that scores a batch per call** | A sepsis alert is needed while the clinician waits, and a ward's patients for one hour fit in one request |
-| **Training and serving share only `model.pkl`** | The VM runs exactly the file the release gates tested. It never retrains and holds no patient data |
+| **Serving downloads the model, never builds it** | The VM runs exactly the file the release gates tested, with the `params.yaml` and metrics committed alongside it. It never retrains and holds no patient data |
 | **`model_md5` in every response** | Any prediction can be traced back to its entry in `dvc.lock`, and from there to the commit and MLflow run |
-| **One contract in `params.yaml`** | Training data and live requests are checked against the same rules. Changing a bound changes both |
+| **One schema in `params.yaml`** | Training data and requests share the same fields, types and required fields, so the API cannot accept a field the model was not trained on |
 | **Preprocessing inside the pickled `Pipeline`** | Imputation and scaling travel with the model, so serving cannot drift from what was evaluated |
 | **The server refuses to start without a valid model** | A deployment mistake shows up once, at startup, instead of as an error on every request |
-| **Reject impossible values, warn about rare ones** | The sickest patients have extreme values and must still be scored. A wrong unit or a misspelled field must not be |
+| **Two sets of bounds: reject impossible values, warn about rare ones** | `api.limits` is wider than `validation.ranges`, because the sickest patients have extreme values and must still be scored. A wrong unit or a misspelled field must not be |
 | **No state: no database, no patient history** | Restarts lose nothing, and the model only ever sees one patient-hour at a time |
 | **No Docker, queue, feature store or model registry** | One service on one VM. Each would add moving parts without solving a problem we have; the VM-level choices are in [deployment.md](deployment.md#architecture) |
+| **No reverse proxy on the VM** | uvicorn listens only on localhost and the Cloudflare tunnel is the only way in, with Cloudflare handling TLS. The cost: no cap on request body size, which a reverse proxy such as nginx would add |
 | **No authentication** | A research and teaching demo with no data behind it. A real clinical integration would need auth and rate limiting first |

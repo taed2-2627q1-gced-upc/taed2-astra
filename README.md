@@ -128,7 +128,7 @@ See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk
 ```
 ├── src/taed2_astra/   # the package: data, features, modeling, api, visualization
 ├── tests/             # pytest suite (unit, contract, API, release gates)
-├── deploy/            # systemd unit, nginx site and smoke test for the VM
+├── deploy/            # systemd unit and smoke test for the VM
 ├── docs/              # cards, API reference, deployment and development guides
 ├── notebooks/         # exploration only
 ├── data/  models/     # DVC-tracked, never in Git

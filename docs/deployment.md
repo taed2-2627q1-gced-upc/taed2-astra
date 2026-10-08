@@ -12,18 +12,14 @@ disk), and how to set it up, update it and debug it.
  Cloudflare ──tunnel──┐
                       ▼
  ┌──────────────────────── UPC VM (Ubuntu) ────────────────────────┐
- │  cloudflared  ──▶  nginx :80  ──proxy──▶  uvicorn 127.0.0.1:8000 │
- │                                           (1 worker)             │
- │                    └─ FastAPI app, model loaded at startup       │
+ │  cloudflared  ──▶  uvicorn 127.0.0.1:8000 (1 worker)             │
+ │                     └─ FastAPI app, model loaded at startup      │
  │  systemd: starts uvicorn at boot, restarts it if it crashes      │
  │  ~/taed2-astra: git checkout + .venv (uv) + models/model.pkl     │
  └──────────────────────────────────────────────────────────────────┘
         ▲ git pull (code)                  ▲ dvc pull (model only)
      GitHub                              DagsHub DVC remote
 ```
-
-<!-- TODO(team): confirm cloudflared forwards to nginx :80 rather than straight to uvicorn :8000,
-and document the tunnel setup (one-time step) here or in deploy/. -->
 
 How this fits with the training pipeline, and the design choices behind it, is in
 [system_design.md](system_design.md).
@@ -33,8 +29,8 @@ How this fits with the training pipeline, and the design choices behind it, is i
 | **No training on the VM.** It downloads the exact `model.pkl` in `dvc.lock` | That is the file the release gates tested. Retraining would produce an untested model with a different MD5, and the full dataset does not fit comfortably in 2 GB of RAM |
 | **No data on the VM** | Serving does not need it, and a public-facing server should hold no patient records |
 | **systemd** rather than `nohup`/`tmux` | Survives logout, reboot and crashes. Logs go to the journal |
-| **nginx** in front of uvicorn | Uvicorn listens only on localhost. nginx is the one place to add rate limiting or other proxy rules later |
 | **Cloudflare tunnel** for public access | A public HTTPS name, `astra.quick2query.com`, for a VM on the university network. `cloudflared` connects outwards to Cloudflare, which terminates TLS, so the VM needs no certificate of its own |
+| **No reverse proxy** (no nginx) | The tunnel forwards straight to uvicorn, which listens only on localhost, so the only way in is through Cloudflare. One less service to install and keep running. Trade-off: no proxy caps the request body size, so a huge body reaches the app before the batch limit rejects it |
 | **One worker** | One CPU, and each worker holds its own copy of the model and libraries |
 | **No Docker** | One service on one VM. A container would add a build step and an image registry without isolating anything we need |
 | **`uv sync --frozen`** | Installs the exact versions in `uv.lock`, including the scikit-learn that pickled the model |
@@ -72,24 +68,27 @@ uv run --no-dev dvc remote modify --local dagshub access_key_id     <token>
 uv run --no-dev dvc remote modify --local dagshub secret_access_key <token>
 ```
 
-**4. Model, service and proxy**
+**4. Model and service**
 
 ```bash
 make vm-setup          # pulls models/model.pkl (only the model, no data)
 make service-install   # systemd unit from deploy/astra-api.service, enabled at boot
-make nginx-install     # nginx site from deploy/nginx.conf on port 80
 ```
 
-If the firewall is active (`sudo ufw status`), open HTTP with `sudo ufw allow 'Nginx HTTP'`.
+Public access goes through a Cloudflare tunnel whose public hostname forwards to
+`http://localhost:8000`.
+
+<!-- TODO(team): document how the Cloudflare tunnel was created (cloudflared install and
+public hostname), without the tunnel token. -->
 
 **5. Check it**
 
 ```bash
-make smoke API_URL=http://localhost     # on the VM, through nginx
+make smoke                                        # on the VM, straight to uvicorn
+make smoke API_URL=https://astra.quick2query.com  # from anywhere, through Cloudflare
 ```
 
-From your laptop (on the UPC network or VPN, if the VM has no public IP), open
-`http://<vm-address>/docs` or run `make smoke API_URL=http://<vm-address>`.
+From your laptop, open <https://astra.quick2query.com/docs>.
 
 ## Releasing a new version
 
@@ -152,5 +151,4 @@ grep -h " -> 422" logs/access.log*                                              
 | Log: `FileNotFoundError: No model at ...` | The model was never pulled | `make vm-setup` |
 | Log: `Model features ... do not match params.yaml` | Code and model come from different commits | `make deploy` so both match `main` |
 | `dvc pull` reports missing files | Whoever last ran `dvc repro` did not `dvc push` | Push from that machine, then retry |
-| `502 Bad Gateway` from nginx | uvicorn is down while nginx is up | `make status`, `make logs` |
-| Browser cannot connect at all | Port 80 closed, or not on the UPC network/VPN | `sudo ufw allow 'Nginx HTTP'`, check the VPN |
+| Cloudflare error page (`502`, `1033`) | uvicorn or `cloudflared` is down on the VM | `make status`, `make logs`, `systemctl status cloudflared` |
