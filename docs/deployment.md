@@ -7,11 +7,14 @@ disk), and how to set it up, update it and debug it.
 
 ```
  Client (browser /docs, curl, demo)
-        │  HTTP :80
+        │  HTTPS  astra.quick2query.com
         ▼
+ Cloudflare ──tunnel──┐
+                      ▼
  ┌──────────────────────── UPC VM (Ubuntu) ────────────────────────┐
- │  nginx :80  ──proxy──▶  uvicorn 127.0.0.1:8000 (1 worker)        │
- │                          └─ FastAPI app, model loaded at startup │
+ │  cloudflared  ──▶  nginx :80  ──proxy──▶  uvicorn 127.0.0.1:8000 │
+ │                                           (1 worker)             │
+ │                    └─ FastAPI app, model loaded at startup       │
  │  systemd: starts uvicorn at boot, restarts it if it crashes      │
  │  ~/taed2-astra: git checkout + .venv (uv) + models/model.pkl     │
  └──────────────────────────────────────────────────────────────────┘
@@ -19,12 +22,19 @@ disk), and how to set it up, update it and debug it.
      GitHub                              DagsHub DVC remote
 ```
 
+<!-- TODO(team): confirm cloudflared forwards to nginx :80 rather than straight to uvicorn :8000,
+and document the tunnel setup (one-time step) here or in deploy/. -->
+
+How this fits with the training pipeline, and the design choices behind it, is in
+[system_design.md](system_design.md).
+
 | Decision | Why |
 |----------|-----|
 | **No training on the VM.** It downloads the exact `model.pkl` in `dvc.lock` | That is the file the release gates tested. Retraining would produce an untested model with a different MD5, and the full dataset does not fit comfortably in 2 GB of RAM |
 | **No data on the VM** | Serving does not need it, and a public-facing server should hold no patient records |
 | **systemd** rather than `nohup`/`tmux` | Survives logout, reboot and crashes. Logs go to the journal |
-| **nginx** in front of uvicorn | Only nginx is exposed. Uvicorn listens on localhost. It is also the place to add HTTPS or rate limiting later |
+| **nginx** in front of uvicorn | Uvicorn listens only on localhost. nginx is the one place to add rate limiting or other proxy rules later |
+| **Cloudflare tunnel** for public access | A public HTTPS name, `astra.quick2query.com`, for a VM on the university network. `cloudflared` connects outwards to Cloudflare, which terminates TLS, so the VM needs no certificate of its own |
 | **One worker** | One CPU, and each worker holds its own copy of the model and libraries |
 | **No Docker** | One service on one VM. A container would add a build step and an image registry without isolating anything we need |
 | **`uv sync --frozen`** | Installs the exact versions in `uv.lock`, including the scikit-learn that pickled the model |
