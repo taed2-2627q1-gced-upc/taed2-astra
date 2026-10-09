@@ -85,6 +85,7 @@ make test-fast  # only tests that need no data on disk (CI's "Tests" job)
 make lint-nb    # Pynblint on notebooks and repo; fails on any lint
 make qa         # lint + test + lint-nb: run this before opening a pull request
 make repro      # dvc repro
+make promote    # after merging a new model: release gates, then MLflow registry @champion
 make api        # uvicorn with reload, docs at /docs
 make serve      # uvicorn as on the VM: one worker, no reload
 make smoke      # end-to-end check of a running API (API_URL=...)

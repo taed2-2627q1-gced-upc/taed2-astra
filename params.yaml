@@ -278,6 +278,9 @@ mlflow:
   experiment_name: taed2-astra
   # Override with MLFLOW_TRACKING_URI=sqlite:///mlflow.db to log runs locally.
   tracking_uri: https://dagshub.com/Santi-49/taed2-astra.mlflow
+  # Model Registry (make promote): a version is registered only after the release gates pass.
+  registered_model: taed2-astra-sepsis
+  champion_alias: champion           # the version that is approved for serving
 
 model_card:
   # Facts for the Hugging Face co2_eq_emissions metadata that CodeCarbon cannot measure.

@@ -47,6 +47,9 @@ model_info:
     `max_leaf_nodes=31`, `min_samples_leaf=100`, `class_weight="balanced"`, `random_state=42`.
     Early stopping (`auto`, 10 % validation fraction) never triggered — all 300 rounds were used.
   - *Artefact:* `models/model.pkl`, 1.11 MB, DVC-tracked; also logged to MLflow (cloudpickle).
+  - *Registry:* `make promote` registers this file in the MLflow Model Registry as
+    `taed2-astra-sepsis` (tagged with its DVC MD5) and points the `@champion` alias at it,
+    only after the release gates pass.
 - **Training date:** 2026-09-19
 - **MLflow run IDs** (experiment `taed2-astra`, <https://dagshub.com/Santi-49/taed2-astra.mlflow>):
   - `train-hist_gradient_boosting`: `fa6bf90f20b243bc80768d0f56e6fb5f`
