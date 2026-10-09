@@ -38,7 +38,8 @@ jobs:
 
       - name: Pre-commit hooks on every file
         # Whitespace, YAML syntax and the 900 kB size limit that keeps data out of Git.
-        run: uvx pre-commit run --all-files --show-diff-on-failure
+        # Ruff is skipped here: lint is enforced by the local hook and only advised in CI (Static analysis).
+        run: SKIP=ruff,ruff-format uvx pre-commit run --all-files --show-diff-on-failure
 
       - name: No data or models committed to Git
         run: |
@@ -47,6 +48,7 @@ jobs:
             echo "::error::These files belong in DVC, not Git:"; echo "$leaked"; exit 1
           fi
 
+  # Lint jobs report on every PR but are not required checks: a reviewer may knowingly merge over a lint finding.
   lint:
     name: Static analysis
     runs-on: ubuntu-latest

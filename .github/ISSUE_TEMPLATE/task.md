@@ -1,6 +1,6 @@
 ---
 name: Task
-about: A unit of work tracked on the team board
+about: A unit of work; its number is the task ID that the pull request closes
 labels: task
 ---
 

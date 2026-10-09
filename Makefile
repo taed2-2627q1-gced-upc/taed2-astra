@@ -1,4 +1,4 @@
-.PHONY: install lint format pylint lint-nb test test-fast qa repro model api serve smoke         vm-setup service-install deploy status logs clean
+.PHONY: install lint format pylint lint-nb test test-fast qa repro promote model api serve smoke         vm-setup service-install deploy status logs clean
 
 PYNBLINT_REPORT := reports/static_analysis/pynblint.json
 
@@ -39,6 +39,10 @@ qa: lint test lint-nb  ## Everything a pull request must pass, in CI order
 
 repro:        ## Reproduce the DVC pipeline
 	uv run dvc repro
+
+promote:      ## Run the release gates, then register models/model.pkl in MLflow as @champion
+	uv run pytest -m integration --no-cov
+	uv run python -m taed2_astra.modeling.promote
 
 # --- Serving: works on Windows (Git Bash or PowerShell with make) and on the VM -------------
 

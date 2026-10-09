@@ -9,7 +9,9 @@ Wants=network-online.target
 User=@USER@
 WorkingDirectory=@DIR@
 # One worker: the VM has one CPU, and each worker holds its own copy of the model in memory.
-ExecStart=@DIR@/.venv/bin/uvicorn taed2_astra.api.main:app --host 127.0.0.1 --port 8000 --workers 1
+# --no-access-log: uvicorn's access log records the caller's IP. The app logs method, path,
+# status and latency itself, which is all operations need, and stores no personal data.
+ExecStart=@DIR@/.venv/bin/uvicorn taed2_astra.api.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
 # A missing or mismatched model stops startup; retry slowly instead of spinning.
 Restart=on-failure
 RestartSec=10

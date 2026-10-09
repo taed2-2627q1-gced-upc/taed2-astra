@@ -1,6 +1,6 @@
 # Deployment guide: UPC VM
 
-How the API runs on the team's UPC virtual machine (Ubuntu, 1 CPU, 2 GB RAM, 24 GB
+How the API runs on the team's UPC virtual machine (Ubuntu, 1 CPU, 4 GB RAM, 24 GB
 disk), and how to set it up, update it and debug it.
 
 ## Architecture
@@ -26,11 +26,12 @@ How this fits with the training pipeline, and the design choices behind it, is i
 
 | Decision | Why |
 |----------|-----|
-| **No training on the VM.** It downloads the exact `model.pkl` in `dvc.lock` | That is the file the release gates tested. Retraining would produce an untested model with a different MD5, and the full dataset does not fit comfortably in 2 GB of RAM |
+| **No training on the VM.** It downloads the exact `model.pkl` in `dvc.lock` | That is the file the release gates tested. Retraining would produce an untested model with a different MD5, and the full dataset does not fit comfortably in 4 GB of RAM |
 | **No data on the VM** | Serving does not need it, and a public-facing server should hold no patient records |
 | **systemd** rather than `nohup`/`tmux` | Survives logout, reboot and crashes. Logs go to the journal |
-| **Cloudflare tunnel** for public access | A public HTTPS name, `astra.quick2query.com`, for a VM on the university network. `cloudflared` connects outwards to Cloudflare, which terminates TLS, so the VM needs no certificate of its own |
+| **Cloudflare tunnel** for public access | A public HTTPS name, `astra.quick2query.com`, for a VM on the university network. `cloudflared` connects outwards to Cloudflare, which terminates TLS, so the VM needs no certificate of its own. SSH goes through the same tunnel (`cloudflared access ssh`) |
 | **No reverse proxy** (no nginx) | The tunnel forwards straight to uvicorn, which listens only on localhost, so the only way in is through Cloudflare. One less service to install and keep running. Trade-off: no proxy caps the request body size, so a huge body reaches the app before the batch limit rejects it |
+| **No IP addresses in the logs** | uvicorn runs with `--no-access-log`; the app logs method, path, status and latency only. Client IPs are personal data that operating the service does not need |
 | **One worker** | One CPU, and each worker holds its own copy of the model and libraries |
 | **No Docker** | One service on one VM. A container would add a build step and an image registry without isolating anything we need |
 | **`uv sync --frozen`** | Installs the exact versions in `uv.lock`, including the scikit-learn that pickled the model |
@@ -78,8 +79,16 @@ make service-install   # systemd unit from deploy/astra-api.service, enabled at 
 Public access goes through a Cloudflare tunnel whose public hostname forwards to
 `http://localhost:8000`.
 
-<!-- TODO(team): document how the Cloudflare tunnel was created (cloudflared install and
-public hostname), without the tunnel token. -->
+To set it up, create a tunnel in the Cloudflare dashboard (Zero Trust → Networks → Tunnels),
+add the public hostname `astra.quick2query.com` → `http://localhost:8000`, and install
+`cloudflared` on the VM as a service with the tunnel's token (never commit it):
+
+```bash
+sudo cloudflared service install <tunnel-token>
+```
+
+SSH uses a second hostname, `ssh-astra.quick2query.com` → `ssh://localhost:22`. Connect with
+`cloudflared access ssh` as the `ProxyCommand` in your `~/.ssh/config`.
 
 **5. Check it**
 
@@ -111,37 +120,6 @@ Check `/model`: its `model_md5` must match `models/model.pkl` in `dvc.lock` on `
 | Restart | `sudo systemctl restart astra-api` |
 | Stop / start | `sudo systemctl stop astra-api` / `sudo systemctl start astra-api` |
 | Run in the foreground to debug | `sudo systemctl stop astra-api && make serve` |
-| Who called the API today | `tail -f logs/access.log` |
-
-### Access log
-
-The service log (`make logs`) records what happened. `logs/access.log` records who asked,
-one line per request:
-
-```
-2026-10-06 23:13:00  203.0.113.7         ES  GET    /health        -> 200     2.1 ms  curl/8.4.0
-2026-10-06 23:13:01  2a0c:5a80:1234::1   NL  POST   /predict       -> 200   115.8 ms  python-requests/2.32
-```
-
-Columns: time (server clock), client IP, country, method, path, status, latency, user agent.
-
-- **IP.** The API is reached through the Cloudflare tunnel, so every connection comes
-  from the local `cloudflared`. The real caller is in Cloudflare's `CF-Connecting-IP`
-  header. The header is trusted because uvicorn listens only on localhost. Run locally,
-  without Cloudflare, the column shows the direct peer instead (`127.0.0.1`).
-- **Country** comes from `CF-IPCountry`, which Cloudflare sends only when *IP Geolocation*
-  is on (dashboard → Network). Otherwise the column shows `-`.
-- **Rotation.** The file rotates at midnight to `access.log.YYYY-MM-DD`, and files older
-  than `params.yaml: api.access_log_days` (30) are deleted.
-- **Privacy.** IP addresses are personal data under GDPR, which is why they stay out of
-  the service log, out of Git (`/logs/` is in `.gitignore`) and are deleted after 30 days.
-
-Handy queries:
-
-```bash
-awk '{print $3}' logs/access.log* | sort | uniq -c | sort -rn | head   # top callers
-grep -h " -> 422" logs/access.log*                                              # rejected requests
-```
 
 ## Troubleshooting
 

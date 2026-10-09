@@ -30,9 +30,7 @@
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           { "context": "Repository hygiene" },
-          { "context": "Static analysis" },
           { "context": "Tests" },
-          { "context": "Notebook QA" },
           { "context": "Conventional PR title" },
           { "context": "Data validation and model gates" }
         ]

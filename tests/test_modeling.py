@@ -2,13 +2,16 @@
 
 import json
 
+import mlflow
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.linear_model import LogisticRegression
 
 from taed2_astra.config import load_params
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.evaluate import compute_metrics
+from taed2_astra.modeling.promote import promote
 from taed2_astra.modeling.registry import build_model
 from taed2_astra.modeling.train import benchmark_best
 
@@ -86,3 +89,21 @@ def test_compute_metrics_is_flat_and_numeric():
     assert metrics["roc_auc"] == 1.0
     assert metrics["f1"] == 1.0
     assert all(isinstance(value, float) for value in metrics.values())
+
+
+def test_promote_registers_once_and_moves_the_champion_alias(tmp_path, monkeypatch):
+    """The registry must hold one version per gated model file, and @champion must name the one being served."""
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{tmp_path / 'mlflow.db'}")
+    mlflow.set_tracking_uri(f"sqlite:///{tmp_path / 'mlflow.db'}")
+    mlflow.set_experiment("promote-test")
+    registry = {"registered_model": "sepsis-test", "champion_alias": "champion"}
+    model = LogisticRegression().fit([[0.0], [1.0]], [0, 1])
+
+    first = promote(model, "md5-a", "logistic_regression", registry)
+    again = promote(model, "md5-a", "logistic_regression", registry)
+    second = promote(model, "md5-b", "logistic_regression", registry)
+
+    client = mlflow.MlflowClient()
+    assert first == again != second
+    assert str(client.get_model_version_by_alias("sepsis-test", "champion").version) == second
+    assert len(client.search_model_versions("name='sepsis-test'")) == 2

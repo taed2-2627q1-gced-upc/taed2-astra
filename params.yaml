@@ -113,7 +113,7 @@ validation:
 model_quality:
   min_roc_auc: 0.78
   min_pr_auc_lift: 4.0               # PR-AUC as a multiple of the positive rate (the no-skill baseline)
-  min_recall: 0.55                   # at evaluate.threshold: missing a septic patient is the costly error
+  min_recall: 0.60                   # at evaluate.threshold: missing a septic patient is the costly error
   slices: [Gender, Unit1]            # subgroups that must not be served much worse than the rest
   max_slice_roc_auc_gap: 0.1
   # Group fairness over fairness.attributes (AIF360). Only error-rate parity is gated: sepsis
@@ -145,8 +145,7 @@ fairness:
     attribute: Gender                # must be complete (validation.complete): every row needs a weight
 # Serving contract. Field types and required fields come from `validation` above.
 api:
-  max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 2 GB RAM)
-  access_log_days: 30               # days of logs/access.log kept; client IPs are personal data (GDPR)
+  max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 4 GB RAM)
   max_errors: 20                     # a 422 lists at most this many problems: a 0.6 MB request must not get a 6 MB answer
   # Hard limits per feature: /predict rejects (422) only values that cannot be a real
   # measurement in the expected unit. They are deliberately wider than validation.ranges,
@@ -279,6 +278,9 @@ mlflow:
   experiment_name: taed2-astra
   # Override with MLFLOW_TRACKING_URI=sqlite:///mlflow.db to log runs locally.
   tracking_uri: https://dagshub.com/Santi-49/taed2-astra.mlflow
+  # Model Registry (make promote): a version is registered only after the release gates pass.
+  registered_model: taed2-astra-sepsis
+  champion_alias: champion           # the version that is approved for serving
 
 model_card:
   # Facts for the Hugging Face co2_eq_emissions metadata that CodeCarbon cannot measure.

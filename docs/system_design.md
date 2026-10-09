@@ -13,7 +13,8 @@ Astra has two halves:
 - **Training** runs on a developer's laptop. The DVC pipeline turns the PhysioNet data into
   `models/model.pkl`, which the release gates test before it is pushed to DagsHub. CI does
   not retrain: on every pull request it re-runs the data contract and the release gates on
-  the pushed model, and checks with `dvc status` that `dvc.lock` matches the code.
+  the pushed model, and checks with `dvc status` that `dvc.lock` matches the code. After
+  merging, `make promote` registers the gated model in the MLflow Model Registry as `@champion`.
 - **Serving** runs on the UPC VM. It gets the model with DVC, and the code, `params.yaml`
   and `metrics/metrics.json` with Git. It loads them once at startup and answers requests
   through a Cloudflare tunnel.
@@ -42,10 +43,10 @@ flowchart TB
     subgraph REMOTES["Remotes"]
         direction LR
         GH[("GitHub<br/>code · dvc.lock · CI")]
-        DH[("DagsHub<br/>DVC storage · MLflow")]
+        DH[("DagsHub<br/>DVC storage · MLflow runs · model registry")]
     end
 
-    subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 2 GB)"]
+    subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 4 GB)"]
         direction LR
         CFD[cloudflared] --> UV["uvicorn 127.0.0.1:8000<br/>1 worker · systemd"] --> APP["FastAPI<br/>api/main.py · api/schemas.py"] --> PRED["modeling/predict.py"] --> MV[("models/model.pkl")]
     end
@@ -55,6 +56,7 @@ flowchart TB
     P -. "validation rules" .-> TRAINING
     TRAINING -- "dvc repro" --> M
     GATES -. checks .-> M
+    GATES -- "make promote: register, @champion" --> DH
     TRAINING -- "runs, metrics (MLflow)" --> DH
     M -- "dvc push" --> DH
     TRAINING -- "git push · pull request" --> GH
@@ -86,7 +88,7 @@ sequenceDiagram
     participant P as predict() (modeling/predict.py)
 
     C->>CF: POST /predict {"records": [...]}
-    CF->>A: forwards to 127.0.0.1:8000, adds CF-Connecting-IP
+    CF->>A: forwards to 127.0.0.1:8000
     A->>S: validate every record
     alt breaks the contract (unknown field, impossible value, wrong type, batch size)
         S-->>A: errors
@@ -97,7 +99,7 @@ sequenceDiagram
         A->>A: warnings: outside validated range, contradicting fields
         A-->>C: 200 predictions in request order + threshold + model_md5
     end
-    A->>A: middleware: service log (journald) and access log (IP, 30 days)
+    A->>A: middleware: service log (journald): method, path, status, latency, no client IP
 ```
 
 </details>
@@ -114,6 +116,6 @@ sequenceDiagram
 | **The server refuses to start without a valid model** | A deployment mistake shows up once, at startup, instead of as an error on every request |
 | **Two sets of bounds: reject impossible values, warn about rare ones** | `api.limits` is wider than `validation.ranges`, because the sickest patients have extreme values and must still be scored. A wrong unit or a misspelled field must not be |
 | **No state: no database, no patient history** | Restarts lose nothing, and the model only ever sees one patient-hour at a time |
-| **No Docker, queue, feature store or model registry** | One service on one VM. Each would add moving parts without solving a problem we have; the VM-level choices are in [deployment.md](deployment.md#architecture) |
+| **A model registry, but no Docker, queue or feature store** | `make promote` registers the gated `model.pkl` in the MLflow Model Registry and moves the `@champion` alias, so the approved model and its history live in one place. The rest is one service on one VM: each would add moving parts without solving a problem we have; the VM-level choices are in [deployment.md](deployment.md#architecture) |
 | **No reverse proxy on the VM** | uvicorn listens only on localhost and the Cloudflare tunnel is the only way in, with Cloudflare handling TLS. The cost: no cap on request body size, which a reverse proxy such as nginx would add |
 | **No authentication** | A research and teaching demo with no data behind it. A real clinical integration would need auth and rate limiting first |
