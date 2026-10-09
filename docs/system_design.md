@@ -46,7 +46,7 @@ flowchart TB
         DH[("DagsHub<br/>DVC storage · MLflow runs · model registry")]
     end
 
-    subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 2 GB)"]
+    subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 4 GB)"]
         direction LR
         CFD[cloudflared] --> UV["uvicorn 127.0.0.1:8000<br/>1 worker · systemd"] --> APP["FastAPI<br/>api/main.py · api/schemas.py"] --> PRED["modeling/predict.py"] --> MV[("models/model.pkl")]
     end
