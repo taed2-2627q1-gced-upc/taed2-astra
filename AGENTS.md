@@ -109,17 +109,19 @@ must skip cleanly on a fresh clone.
 
 ## CI and branch protection
 
-Every pull request into `main` runs `.github/workflows/ci.yml`. Each job is a
-required status check in `.github/rulesets/main.json`:
+Every pull request into `main` runs `.github/workflows/ci.yml`. Every job
+except the two lint jobs is a required status check in `.github/rulesets/main.json`.
+Lint is enforced by the local pre-commit hook and only advised in CI, so a
+reviewer can knowingly merge over a finding (course guidance):
 
-| Check | Fails when |
-|-------|-----------|
-| Repository hygiene | `uv.lock` is stale, a pre-commit hook fails, or a file under `data/`/`models/` is in Git |
-| Static analysis | ruff finds an error or unformatted file, or the pylint score drops below 9.5 |
-| Tests | a test fails or coverage drops below the floor in `pyproject.toml` |
-| Notebook QA | Pynblint reports any notebook or repository lint |
-| Conventional PR title | the title is not `<type>: <description>` (it becomes the merge commit) |
-| Data validation and model gates | a critical expectation fails, a release gate fails, or `dvc.lock` is stale. Runs only when the `DAGSHUB_TOKEN` secret is set |
+| Check | Required | Fails when |
+|-------|----------|-----------|
+| Repository hygiene | yes | `uv.lock` is stale, a non-ruff pre-commit hook fails, or a file under `data/`/`models/` is in Git |
+| Static analysis | no | ruff finds an error or unformatted file, or the pylint score drops below 9.5 |
+| Tests | yes | a test fails or coverage drops below the floor in `pyproject.toml` |
+| Notebook QA | no | Pynblint reports any notebook or repository lint |
+| Conventional PR title | yes | the title is not `<type>: <description>` (it becomes the merge commit) |
+| Data validation and model gates | yes | a critical expectation fails, a release gate fails, or `dvc.lock` is stale. Runs only when the `DAGSHUB_TOKEN` secret is set |
 
 The ruleset also requires one approving review, resolved conversations and an
 up-to-date branch, and blocks force-pushes and deletion of `main`. A job's
