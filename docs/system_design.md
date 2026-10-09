@@ -86,7 +86,7 @@ sequenceDiagram
     participant P as predict() (modeling/predict.py)
 
     C->>CF: POST /predict {"records": [...]}
-    CF->>A: forwards to 127.0.0.1:8000, adds CF-Connecting-IP
+    CF->>A: forwards to 127.0.0.1:8000
     A->>S: validate every record
     alt breaks the contract (unknown field, impossible value, wrong type, batch size)
         S-->>A: errors
@@ -97,7 +97,7 @@ sequenceDiagram
         A->>A: warnings: outside validated range, contradicting fields
         A-->>C: 200 predictions in request order + threshold + model_md5
     end
-    A->>A: middleware: service log (journald) and access log (IP, 30 days)
+    A->>A: middleware: service log (journald): method, path, status, latency, no client IP
 ```
 
 </details>

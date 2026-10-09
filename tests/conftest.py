@@ -49,12 +49,11 @@ def served_model_path_fixture(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(name="client")
-def client_fixture(served_model_path, monkeypatch, tmp_path) -> Iterator[TestClient]:
+def client_fixture(served_model_path, monkeypatch) -> Iterator[TestClient]:
     """A test client whose startup loaded the synthetic model.
 
     The `with` block runs the lifespan, exactly as uvicorn does before serving.
     """
     monkeypatch.setattr(api_main, "MODEL_PATH", served_model_path)
-    monkeypatch.setattr(api_main, "ACCESS_LOG_PATH", tmp_path / "logs" / "access.log")
     with TestClient(api_main.app) as client:
         yield client

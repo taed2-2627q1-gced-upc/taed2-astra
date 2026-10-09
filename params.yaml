@@ -145,8 +145,7 @@ fairness:
     attribute: Gender                # must be complete (validation.complete): every row needs a weight
 # Serving contract. Field types and required fields come from `validation` above.
 api:
-  max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 2 GB RAM)
-  access_log_days: 30               # days of logs/access.log kept; client IPs are personal data (GDPR)
+  max_batch_size: 1000               # one request scores at most this many patient-hours (VM has 4 GB RAM)
   max_errors: 20                     # a 422 lists at most this many problems: a 0.6 MB request must not get a 6 MB answer
   # Hard limits per feature: /predict rejects (422) only values that cannot be a real
   # measurement in the expected unit. They are deliberately wider than validation.ranges,

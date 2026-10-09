@@ -4,7 +4,6 @@ import hashlib
 import json
 import pickle
 from http import HTTPStatus
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -36,31 +35,6 @@ def test_root_points_to_the_docs(client):
     response = client.get("/")
     assert response.status_code == HTTPStatus.OK
     assert response.json()["docs"] == "/docs"
-
-
-def access_log(client: TestClient) -> str:
-    """Return what the access log holds so far."""
-    for handler in client.app.state.access_log.handlers:
-        handler.flush()
-    return Path(client.app.state.access_log.handlers[0].baseFilename).read_text(encoding="utf-8")
-
-
-def test_access_log_records_the_caller_cloudflare_reports(client):
-    """Behind the tunnel every request comes from localhost; only Cloudflare's header says who called."""
-    client.get("/health", headers={"CF-Connecting-IP": "203.0.113.7", "CF-IPCountry": "ES", "User-Agent": "grader"})
-    line = access_log(client).splitlines()[-1]
-    assert "203.0.113.7" in line and " ES " in line and "/health" in line and "200" in line and "grader" in line
-
-
-def test_access_log_falls_back_to_the_direct_peer(client):
-    """Run locally without Cloudflare, the log must still say who called rather than leave a blank."""
-    client.get("/health")
-    assert access_log(client).splitlines()[-1].split()[2] == "testclient"
-
-
-def test_client_ips_stay_out_of_the_service_log(client):
-    """IPs are personal data: they go only to the access log, which has a retention limit, not to journald."""
-    assert client.app.state.access_log.propagate is False
 
 
 def test_health_answers_head_requests(client):
