@@ -1,4 +1,4 @@
-.PHONY: install lint format pylint lint-nb test test-fast qa repro model api serve smoke         vm-setup service-install nginx-install deploy status logs clean
+.PHONY: install lint format pylint lint-nb test test-fast qa repro model api serve smoke         vm-setup service-install deploy status logs clean
 
 PYNBLINT_REPORT := reports/static_analysis/pynblint.json
 
@@ -54,7 +54,7 @@ serve:        ## Serve the API as production does: no reload, one worker, no dev
 smoke:        ## Check a running API end to end (health, model, valid and rejected predictions)
 	uv run --no-dev python deploy/smoke_test.py $(API_URL)
 
-# --- VM only (Ubuntu, systemd + nginx). See README "Deploying on the VM" -------------------
+# --- VM only (Ubuntu, systemd). See docs/deployment.md -------------------------------------
 
 vm-setup:     ## Once: install runtime dependencies and the shipped model
 	uv sync --frozen --no-dev
@@ -64,14 +64,6 @@ service-install:  ## Once: register the API as a systemd service that starts at 
 	sed -e "s|@USER@|$$(whoami)|g" -e "s|@DIR@|$(CURDIR)|g" deploy/$(SERVICE).service 		| sudo tee /etc/systemd/system/$(SERVICE).service > /dev/null
 	sudo systemctl daemon-reload
 	sudo systemctl enable --now $(SERVICE)
-
-nginx-install:    ## Once: put nginx on port 80 in front of the API
-	sudo apt-get install -y nginx
-	sudo cp deploy/nginx.conf /etc/nginx/sites-available/$(SERVICE)
-	sudo ln -sf /etc/nginx/sites-available/$(SERVICE) /etc/nginx/sites-enabled/$(SERVICE)
-	sudo rm -f /etc/nginx/sites-enabled/default
-	sudo nginx -t
-	sudo systemctl reload nginx
 
 deploy:       ## Every release: pull code and model, restart the service, smoke-test it
 	git pull --ff-only

@@ -128,7 +128,7 @@ See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk
 ```
 ├── src/taed2_astra/   # the package: data, features, modeling, api, visualization
 ├── tests/             # pytest suite (unit, contract, API, release gates)
-├── deploy/            # systemd unit, nginx site and smoke test for the VM
+├── deploy/            # systemd unit and smoke test for the VM
 ├── docs/              # cards, API reference, deployment and development guides
 ├── notebooks/         # exploration only
 ├── data/  models/     # DVC-tracked, never in Git
@@ -141,6 +141,7 @@ See [docs/api.md](docs/api.md#examples) for ready-to-send low-risk and high-risk
 
 | Document | For |
 |----------|-----|
+| [System design](docs/system_design.md) | How training and serving fit together, with diagrams and the reasons behind each choice |
 | [API reference](docs/api.md) | Calling the API: endpoints, input contract, errors, testing it locally |
 | [Deployment guide](docs/deployment.md) | Running the API as a service on the UPC VM |
 | [Development guide](docs/development.md) | Setup, remotes, pipeline, quality assurance, tooling |
