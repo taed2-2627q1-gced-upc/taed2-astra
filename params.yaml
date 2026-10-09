@@ -113,7 +113,7 @@ validation:
 model_quality:
   min_roc_auc: 0.78
   min_pr_auc_lift: 4.0               # PR-AUC as a multiple of the positive rate (the no-skill baseline)
-  min_recall: 0.55                   # at evaluate.threshold: missing a septic patient is the costly error
+  min_recall: 0.60                   # at evaluate.threshold: missing a septic patient is the costly error
   slices: [Gender, Unit1]            # subgroups that must not be served much worse than the rest
   max_slice_roc_auc_gap: 0.1
   # Group fairness over fairness.attributes (AIF360). Only error-rate parity is gated: sepsis
