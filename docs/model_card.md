@@ -51,6 +51,9 @@ model_info:
     `taed2-astra-sepsis` (tagged with its DVC MD5) and points the `@champion` alias at it,
     only after the release gates pass.
 - **Training date:** 2026-09-19
+- **Traceability:** `models/model.pkl` MD5 `36fc5a13ebad684577a7e02442c79a2e` in `dvc.lock`,
+  first produced at commit `3404f08` and regenerated bit-for-bit by every `dvc repro` since.
+  The API reports the same MD5 as `model_md5`.
 - **MLflow run IDs** (experiment `taed2-astra`, <https://dagshub.com/Santi-49/taed2-astra.mlflow>):
   - `train-hist_gradient_boosting`: `fa6bf90f20b243bc80768d0f56e6fb5f`
   - `evaluate-hist_gradient_boosting`: `a79775a4f7764d149effad1508984f93`
@@ -88,6 +91,10 @@ Ranked by PR-AUC, the honest metric at 1.8 % prevalence (mean ± std over folds)
 | `logistic_regression` | 0.0755 ± 0.0028 | 0.755 | 0.189 | 22 | 5.4 | 0.007 |
 | `tabpfn` (Hugging Face `Prior-Labs/TabPFN-v2-clf`) | skipped | — | — | — | — | — |
 
+- Fit time and latency come from the selection run of 2026-09-19 (commit `3404f08`), on the
+  laptop where the decision was made. `metrics/benchmark.json` now holds the 2026-10-06 rerun
+  on a second laptop, which reproduced every score exactly but not the timings. Timing depends
+  on the machine, so it is not part of the reproducibility requirement.
 - TabPFN was skipped because the optional `foundation` dependency group (torch) was not
   installed for this run; the run is recorded in MLflow with `status = skipped`.
   Enable with `uv sync --group foundation`.
@@ -213,6 +220,9 @@ value and its missing-value indicator are reported separately and summed per cli
   `ensemble_stacking` row in the benchmark is slightly optimistic; the outer grouped folds
   still score it fairly.
 - **Not calibrated, not threshold-tuned.** Probabilities are not clinical risks.
+- **Patient-level sensitivity not yet measured.** The target is to flag at least 70 % of the
+  patients who develop sepsis (any hour before onset). `evaluate` reports hour-level recall
+  (0.638), which is a different aggregation.
 
 ## Sustainability
 
@@ -269,7 +279,7 @@ regression fails, not noise:
 |---|---|---|
 | ROC-AUC | ≥ 0.78 | 0.809 |
 | PR-AUC lift over the positive rate | ≥ 4.0× | 5.5× |
-| Recall at `evaluate.threshold` | ≥ 0.55 | 0.638 |
+| Recall at `evaluate.threshold` | ≥ 0.60 | 0.638 |
 | ROC-AUC gap between slices (`Gender`, `Unit1`) | ≤ 0.10 | 0.016 (Gender), 0.045 (Unit1) |
 | \|Equal opportunity difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.042 (Gender), 0.019 (Age) |
 | \|Average odds difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.032 (Gender), 0.019 (Age) |

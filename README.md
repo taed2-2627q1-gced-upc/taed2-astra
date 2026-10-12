@@ -170,7 +170,7 @@ Browse them with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 
 ## Workflow
 
-**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate → fairness, co2_report}`
+**Pipeline** — `dvc repro` runs `prepare → validate → {benchmark, train → evaluate, fairness, explain, co2_report}`
 and `plots`, skipping any stage whose dependencies and params are unchanged. After a
 repro, `dvc push` before opening a pull request, so teammates and CI can pull what
 `dvc.lock` points at.
