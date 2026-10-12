@@ -106,12 +106,15 @@ stages:
   # direction checks that tests/test_explainability.py turns into release gates.
   explain:
     cmd: python -X utf8 -m taed2_astra.modeling.explain
-    deps:
+    deps:   # every module the stage imports, so a change to any of them reruns it
       - data/processed/test.parquet
       - models/model.pkl
+      - src/taed2_astra/config.py
+      - src/taed2_astra/features/build_features.py
       - src/taed2_astra/modeling/explain.py
       - src/taed2_astra/modeling/predict.py
-      - src/taed2_astra/features/build_features.py
+      - src/taed2_astra/modeling/promote.py
+      - src/taed2_astra/visualization/plots.py
     params:
       - dataset
       - explain

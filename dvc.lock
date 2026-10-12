@@ -571,6 +571,10 @@ stages:
       hash: md5
       md5: 36fc5a13ebad684577a7e02442c79a2e
       size: 1110933
+    - path: src/taed2_astra/config.py
+      hash: md5
+      md5: 01adcbe733f32246ba5de6dee17f553c
+      size: 2792
     - path: src/taed2_astra/features/build_features.py
       hash: md5
       md5: d1ba19bb6d6793dde2d49cf076542e79
@@ -583,6 +587,14 @@ stages:
       hash: md5
       md5: 775e955dea55905aabaffb5b67cca400
       size: 1401
+    - path: src/taed2_astra/modeling/promote.py
+      hash: md5
+      md5: 3bb5fbc2c41a52a95ac250f25828d1f7
+      size: 2721
+    - path: src/taed2_astra/visualization/plots.py
+      hash: md5
+      md5: 937013c8d270308932bf4c479552ed1c
+      size: 3905
     params:
       params.yaml:
         dataset:
@@ -618,8 +630,8 @@ stages:
       size: 7096
     - path: reports/figures/shap_beeswarm.png
       hash: md5
-      md5: 4b57d2b061ab8311c7dbff82d7d07881
-      size: 178790
+      md5: 5df18d23010d0721f0e4b21b9ccef215
+      size: 177862
     - path: reports/figures/shap_importance.png
       hash: md5
       md5: c6f2e17e9e0fa36f81f505e6651f649b

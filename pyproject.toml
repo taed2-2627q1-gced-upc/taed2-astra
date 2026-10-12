@@ -34,6 +34,10 @@ dependencies = [
     "great-expectations>=1.0",
     # explainability
     "shap>=0.46",
+    # numba (via shap) dropped Intel-Mac wheels after 0.61, and 0.61 needs numpy < 2.3. Without these pins
+    # uv falls back to numba 0.53 there, which only ships as source and cannot be installed.
+    "numba>=0.59,<0.62; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "numpy<2.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     # serving
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
