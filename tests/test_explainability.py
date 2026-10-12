@@ -19,10 +19,13 @@ from taed2_astra.modeling.explain import (
     build_report,
     direction_check,
     explain,
+    explain_record,
     input_of,
     missing_indicator_share,
+    patient_table,
     plot_beeswarm,
     plot_importance,
+    plot_waterfall,
     sample_test_split,
 )
 from taed2_astra.modeling.predict import load_model
@@ -114,6 +117,31 @@ def test_unknown_variable_in_expected_direction_fails_loudly(fitted):
     settings = {"min_measured_rows": 1, "min_abs_spearman": 0, "expected_direction": {"Lactat": 1}}
     with pytest.raises(KeyError, match="Lactat"):
         build_report(explain(model, x.head(100)), "toy", settings)
+
+
+def test_patient_table_rebuilds_the_risk_the_model_returns(fitted, tmp_path, monkeypatch):
+    """The per-patient table must add up to the probability /predict would return for the same record."""
+    monkeypatch.setattr(explain_module, "save_figure", lambda fig, name: _save(fig, tmp_path / f"{name}.png"))
+    model, _ = fitted
+    record = {"up": 2.0, "noise": 0.1}  # "down" not sent, like an unmeasured lab
+    table = patient_table(explain_record(model, record))
+    expected = model.predict_proba(pd.DataFrame([record]).reindex(columns=list(model.feature_names_in_)))[0, 1]
+    assert table["risk"] == pytest.approx(expected, abs=1e-9)
+    contributions = table["contributions"]
+    assert table["output"] == pytest.approx(
+        table["base_value"] + sum(c["contribution"] for c in contributions.values())
+    )
+    assert contributions["down"]["value"] is None
+    assert list(contributions)[0] == max(contributions, key=lambda name: abs(contributions[name]["contribution"]))
+    json.dumps(table)  # goes into metrics/shap.json as-is
+    path = plot_waterfall(explain_record(model, record), "toy", top_k=3)
+    assert path.name == "shap_waterfall_toy.png" and path.stat().st_size > 0
+
+
+def test_explained_examples_exist_in_the_api_contract():
+    """explain.examples names API examples; a typo would make the stage fail only at `dvc repro`."""
+    params = load_params()
+    assert set(params["explain"]["examples"]) <= set(params["api"]["examples"])
 
 
 def _save(figure, path):

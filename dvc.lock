@@ -581,8 +581,8 @@ stages:
       size: 1925
     - path: src/taed2_astra/modeling/explain.py
       hash: md5
-      md5: 871d9928ae631bccdbe4c787c14d1df2
-      size: 11147
+      md5: b2bb5eaae94959bd4d1ab58016a6f144
+      size: 13999
     - path: src/taed2_astra/modeling/predict.py
       hash: md5
       md5: 775e955dea55905aabaffb5b67cca400
@@ -597,6 +597,75 @@ stages:
       size: 3905
     params:
       params.yaml:
+        api.examples:
+          deteriorating:
+            summary: High risk - deteriorating patient
+            description: Fever, tachycardia, fast breathing, low MAP, raised
+              lactate and WBC, on oxygen.
+            record:
+              Hour: 5
+              HR: 104
+              O2Sat: 94
+              Temp: 38.6
+              SBP: 102
+              MAP: 68
+              DBP: 52
+              Resp: 26
+              FiO2: 0.4
+              Lactate: 3.1
+              WBC: 15.2
+              Creatinine: 1.4
+              Platelets: 140
+              Age: 67
+              Gender: 1
+              Unit1: 1
+              Unit2: 0
+              HospAdmTime: -12.5
+              ICULOS: 6
+          stable:
+            summary: Low risk - stable patient
+            description: Normal vitals and labs on room air, three hours into
+              the ICU stay.
+            record:
+              Hour: 2
+              HR: 72
+              O2Sat: 98
+              Temp: 36.8
+              SBP: 125
+              MAP: 88
+              DBP: 70
+              Resp: 15
+              FiO2: 0.21
+              Lactate: 1.0
+              WBC: 7.5
+              Creatinine: 0.9
+              Platelets: 250
+              Age: 45
+              Gender: 0
+              Unit1: 0
+              Unit2: 1
+              HospAdmTime: -2.0
+              ICULOS: 3
+          minimal:
+            summary: Only the required fields
+            description: Every unmeasured value is left out; the model imputes
+              it.
+            record:
+              Hour: 2
+              Age: 45
+              Gender: 0
+              ICULOS: 3
+          bradycardia:
+            summary: Extreme value - scored with a warning
+            description: HR 19 is possible but below the training range, so the
+              risk comes back with a warning.
+            record:
+              Hour: 5
+              HR: 19
+              Temp: 38.6
+              Age: 67
+              Gender: 1
+              ICULOS: 6
         dataset:
           name: prediction-of-sepsis
           raw_file: prediction-of-sepsis.zip
@@ -622,17 +691,24 @@ stages:
             Lactate: 1
             Creatinine: 1
             BUN: 1
+          examples:
+          - deteriorating
+          waterfall_top_k: 13
         train.model: hist_gradient_boosting
     outs:
     - path: metrics/shap.json
       hash: md5
-      md5: 9fb5b70db25dcedd9f9a95321a3ab41d
-      size: 7096
+      md5: e996b7dc9266d47fa6961f164fa9fa8f
+      size: 13296
     - path: reports/figures/shap_beeswarm.png
       hash: md5
-      md5: 5df18d23010d0721f0e4b21b9ccef215
-      size: 177862
+      md5: 645432f17f4d5b0a1b079069145d1696
+      size: 178827
     - path: reports/figures/shap_importance.png
       hash: md5
       md5: c6f2e17e9e0fa36f81f505e6651f649b
       size: 48503
+    - path: reports/figures/shap_waterfall_deteriorating.png
+      hash: md5
+      md5: 4110d513110b897a89852703afd0d3f8
+      size: 101001

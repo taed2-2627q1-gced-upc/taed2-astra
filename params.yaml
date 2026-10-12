@@ -291,6 +291,10 @@ explain:
     Lactate: 1
     Creatinine: 1
     BUN: 1
+  # API examples (api.examples) explained one by one: a table in metrics/shap.json and
+  # reports/figures/shap_waterfall_<name>.png. A new name here also needs its figure in dvc.yaml outs.
+  examples: [deteriorating]
+  waterfall_top_k: 13                   # inputs shown in a waterfall; the rest are summed in one bar
 
 mlflow:
   experiment_name: taed2-astra

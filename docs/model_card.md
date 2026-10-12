@@ -161,7 +161,8 @@ Definitions live in `params.yaml: fairness`:
 
 The `explain` stage (`src/taed2_astra/modeling/explain.py`) runs SHAP's `TreeExplainer` on the
 booster for 5,000 test rows (`params.yaml: explain`) and writes `metrics/shap.json`,
-`reports/figures/shap_importance.png` and `reports/figures/shap_beeswarm.png`. Contributions are
+`reports/figures/shap_importance.png`, `reports/figures/shap_beeswarm.png` and one waterfall per
+API example in `explain.examples` (`reports/figures/shap_waterfall_deteriorating.png`). Contributions are
 in log-odds, the booster's raw output; they add back to it exactly (max error ~1e-14). Each input's
 value and its missing-value indicator are reported separately and summed per clinical variable.
 
@@ -190,6 +191,9 @@ value and its missing-value indicator are reported separately and summed per cli
 
   `Temp` is deliberately not checked: fever and hypothermia are both sepsis signs, so a
   monotonic test would be wrong for it.
+- **One patient** (`metrics/shap.json: examples`, API example `deteriorating`): risk 0.86 from an
+  average of 0.26. Fever adds the most (+0.69), followed by HR, WBC, Resp and MAP; FiO2 (+0.47) and
+  Lactate (+0.37) count mainly because they were measured; only `HospAdmTime` lowers it (−0.27).
 
 ## Limitations
 
