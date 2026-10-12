@@ -1,0 +1,260 @@
+{
+  "model": "hist_gradient_boosting",
+  "output": "log-odds",
+  "n_rows": 5000,
+  "base_value": -1.0521282228194948,
+  "max_additivity_error": 1.9095836023552692e-14,
+  "missing_indicator_share": 0.24256904607338198,
+  "direction_checks_passed": true,
+  "direction_checks": {
+    "HR": {
+      "expected": 1,
+      "n_measured": 4528,
+      "spearman": 0.972921720795227,
+      "passed": true
+    },
+    "Resp": {
+      "expected": 1,
+      "n_measured": 4234,
+      "spearman": 0.8639321436180173,
+      "passed": true
+    },
+    "MAP": {
+      "expected": -1,
+      "n_measured": 4392,
+      "spearman": -0.8998394211700335,
+      "passed": true
+    },
+    "SBP": {
+      "expected": -1,
+      "n_measured": 4304,
+      "spearman": -0.753408136494422,
+      "passed": true
+    },
+    "Lactate": {
+      "expected": 1,
+      "n_measured": 127,
+      "spearman": 0.529884191275516,
+      "passed": true
+    },
+    "Creatinine": {
+      "expected": 1,
+      "n_measured": 292,
+      "spearman": 0.930432989693416,
+      "passed": true
+    },
+    "BUN": {
+      "expected": 1,
+      "n_measured": 326,
+      "spearman": 0.8632832600194031,
+      "passed": true
+    }
+  },
+  "importance": {
+    "HospAdmTime": {
+      "total": 0.38402960398808034,
+      "value": 0.38402960398808034,
+      "missing_indicator": 0.0
+    },
+    "ICULOS": {
+      "total": 0.31984228071584064,
+      "value": 0.31984228071584064,
+      "missing_indicator": 0.0
+    },
+    "Unit1": {
+      "total": 0.2836712349148911,
+      "value": 0.15184425570492865,
+      "missing_indicator": 0.13182697920996242
+    },
+    "HR": {
+      "total": 0.2621626999228188,
+      "value": 0.2385330053577255,
+      "missing_indicator": 0.02362969456509331
+    },
+    "Temp": {
+      "total": 0.18023581375174047,
+      "value": 0.07570882523836973,
+      "missing_indicator": 0.10452698851337072
+    },
+    "Age": {
+      "total": 0.1671557050778408,
+      "value": 0.1671557050778408,
+      "missing_indicator": 0.0
+    },
+    "MAP": {
+      "total": 0.13905708189804594,
+      "value": 0.11548619495577396,
+      "missing_indicator": 0.023570886942271996
+    },
+    "Resp": {
+      "total": 0.13401399479418769,
+      "value": 0.11717885384971938,
+      "missing_indicator": 0.016835140944468318
+    },
+    "DBP": {
+      "total": 0.13266298166514884,
+      "value": 0.08014228179198382,
+      "missing_indicator": 0.052520699873165
+    },
+    "FiO2": {
+      "total": 0.09987578781477335,
+      "value": 0.009117573592200626,
+      "missing_indicator": 0.09075821422257273
+    },
+    "SBP": {
+      "total": 0.09686162605505827,
+      "value": 0.05019063931527851,
+      "missing_indicator": 0.046670986739779756
+    },
+    "Hour": {
+      "total": 0.09608931698253657,
+      "value": 0.09608931698253657,
+      "missing_indicator": 0.0
+    },
+    "Gender": {
+      "total": 0.09173263106005113,
+      "value": 0.09173263106005113,
+      "missing_indicator": 0.0
+    },
+    "EtCO2": {
+      "total": 0.08140163580070113,
+      "value": 0.01153991156993064,
+      "missing_indicator": 0.06986172423077049
+    },
+    "O2Sat": {
+      "total": 0.0597122662520434,
+      "value": 0.05636609854853962,
+      "missing_indicator": 0.0033461677035037823
+    },
+    "Glucose": {
+      "total": 0.0330834837007751,
+      "value": 0.01140499080681687,
+      "missing_indicator": 0.021678492893958234
+    },
+    "Lactate": {
+      "total": 0.02653620401921716,
+      "value": 0.0020647211038252087,
+      "missing_indicator": 0.024471482915391952
+    },
+    "BaseExcess": {
+      "total": 0.01734709556521337,
+      "value": 0.003838902782806195,
+      "missing_indicator": 0.013508192782407172
+    },
+    "Creatinine": {
+      "total": 0.012607224368921746,
+      "value": 0.012313623967452845,
+      "missing_indicator": 0.00029360040146890167
+    },
+    "Hct": {
+      "total": 0.012464371357383661,
+      "value": 0.011784906327031228,
+      "missing_indicator": 0.0006794650303524322
+    },
+    "SaO2": {
+      "total": 0.01085183934797389,
+      "value": 0.0030437716257014995,
+      "missing_indicator": 0.00780806772227239
+    },
+    "pH": {
+      "total": 0.010486824954121622,
+      "value": 0.0025584663355481137,
+      "missing_indicator": 0.007928358618573508
+    },
+    "WBC": {
+      "total": 0.010209044465502862,
+      "value": 0.009963862275037743,
+      "missing_indicator": 0.00024518219046511957
+    },
+    "BUN": {
+      "total": 0.010054409294947053,
+      "value": 0.009429088948215376,
+      "missing_indicator": 0.0006253203467316759
+    },
+    "Unit2": {
+      "total": 0.008768800718004335,
+      "value": 0.008768800718004335,
+      "missing_indicator": 0.0
+    },
+    "PaCO2": {
+      "total": 0.00777336419648317,
+      "value": 0.0016368298456522223,
+      "missing_indicator": 0.0061365343508309475
+    },
+    "Platelets": {
+      "total": 0.007408144784892448,
+      "value": 0.007063197433155871,
+      "missing_indicator": 0.00034494735173657743
+    },
+    "Alkalinephos": {
+      "total": 0.0057543973070269235,
+      "value": 0.0004861418003195413,
+      "missing_indicator": 0.005268255506707382
+    },
+    "PTT": {
+      "total": 0.005276658220257127,
+      "value": 0.002853744053692481,
+      "missing_indicator": 0.0024229141665646457
+    },
+    "Chloride": {
+      "total": 0.004231422636519017,
+      "value": 0.003518178130708027,
+      "missing_indicator": 0.0007132445058109896
+    },
+    "TroponinI": {
+      "total": 0.003948430444008673,
+      "value": 0.00041672920166656616,
+      "missing_indicator": 0.0035317012423421064
+    },
+    "Potassium": {
+      "total": 0.0035072607297196995,
+      "value": 0.002831428635883719,
+      "missing_indicator": 0.0006758320938359807
+    },
+    "HCO3": {
+      "total": 0.0032098288517442737,
+      "value": 0.0020041937126892805,
+      "missing_indicator": 0.0012056351390549935
+    },
+    "Hgb": {
+      "total": 0.0028487327326247166,
+      "value": 0.0026636812020911223,
+      "missing_indicator": 0.0001850515305335945
+    },
+    "Bilirubin_total": {
+      "total": 0.0027152841867888276,
+      "value": 0.0025014352417705595,
+      "missing_indicator": 0.00021384894501826795
+    },
+    "Calcium": {
+      "total": 0.002029814357814734,
+      "value": 0.0016903578882033774,
+      "missing_indicator": 0.00033945646961135666
+    },
+    "Fibrinogen": {
+      "total": 0.001650302261802286,
+      "value": 0.0010900970145317733,
+      "missing_indicator": 0.0005602052472705127
+    },
+    "AST": {
+      "total": 0.0015897752255114648,
+      "value": 0.0012430055791244176,
+      "missing_indicator": 0.00034676964638704716
+    },
+    "Magnesium": {
+      "total": 0.0015350143227205472,
+      "value": 0.0014118842436694706,
+      "missing_indicator": 0.00012313007905107653
+    },
+    "Phosphate": {
+      "total": 0.0009006593957173168,
+      "value": 0.000713030694256951,
+      "missing_indicator": 0.00018762870146036583
+    },
+    "Bilirubin_direct": {
+      "total": 0.0008820487415552357,
+      "value": 0.0002114664241819753,
+      "missing_indicator": 0.0006705823173732603
+    }
+  }
+}

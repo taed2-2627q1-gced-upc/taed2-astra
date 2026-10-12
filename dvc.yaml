@@ -77,6 +77,26 @@ stages:
       - metrics/metrics.json:
           cache: false
 
+  # SHAP explainability: global importance (value vs missing-indicator) and the clinical
+  # direction checks that tests/test_explainability.py turns into release gates.
+  explain:
+    cmd: python -X utf8 -m taed2_astra.modeling.explain
+    deps:
+      - data/processed/test.parquet
+      - models/model.pkl
+      - src/taed2_astra/modeling/explain.py
+      - src/taed2_astra/features/build_features.py
+    params:
+      - dataset
+      - explain
+      - train.model
+    metrics:
+      - metrics/shap.json:
+          cache: false
+    outs:   # figures are gitignored (/reports/figures/*), so DVC caches them: `dvc pull` fetches them
+      - reports/figures/shap_importance.png
+      - reports/figures/shap_beeswarm.png
+
   # "Reporting energy in the model card": the shipped model's CodeCarbon row becomes the
   # Hugging Face co2_eq_emissions metadata at the top of docs/model_card.md. model.pkl and
   # metrics.json are deps so this stage runs after train and evaluate have written emissions.csv.

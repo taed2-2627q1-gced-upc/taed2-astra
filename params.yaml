@@ -56,6 +56,24 @@ benchmark:
 evaluate:
   threshold: 0.5
 
+explain:
+  # SHAP on a sample of the test split (stage `explain`, gates in tests/test_explainability.py).
+  sample_rows: 5000                     # ~85 septic hours; TreeExplainer takes seconds on a laptop
+  random_state: 42
+  top_k: 15                             # inputs shown in the figures
+  min_measured_rows: 50                 # a direction check needs this many rows where the variable was measured
+  min_abs_spearman: 0.3                 # value vs SHAP contribution must be at least this monotonic
+  # +1: a higher value must push towards an alert; -1: a lower value must.
+  # Temp is left out on purpose: both fever and hypothermia are sepsis signs, so its effect is U-shaped.
+  expected_direction:
+    HR: 1
+    Resp: 1
+    MAP: -1
+    SBP: -1
+    Lactate: 1
+    Creatinine: 1
+    BUN: 1
+
 mlflow:
   experiment_name: taed2-astra
   # Override with MLFLOW_TRACKING_URI=sqlite:///mlflow.db to log runs locally.

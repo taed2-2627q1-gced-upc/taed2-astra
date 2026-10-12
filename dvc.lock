@@ -180,8 +180,8 @@ stages:
       size: 1925
     - path: src/taed2_astra/modeling/registry.py
       hash: md5
-      md5: 3698a6a30003be0e612c0ee5fd557525
-      size: 5300
+      md5: 7b7f0e82eff46b4eb9d64c2611eba3af
+      size: 5678
     - path: src/taed2_astra/modeling/train.py
       hash: md5
       md5: b26d934a6b062d87384083bb10d15d48
@@ -315,3 +315,63 @@ stages:
             features); ensembles rejected because their extra energy bought no
             meaningful PR-AUC gain
         train.model: hist_gradient_boosting
+  explain:
+    cmd: python -X utf8 -m taed2_astra.modeling.explain
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
+    - path: models/model.pkl
+      hash: md5
+      md5: 4728f865299ee181f789f2f36b0a88ea
+      size: 1110933
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/explain.py
+      hash: md5
+      md5: 9943f8edd7b91534c03a3cc55107596a
+      size: 10830
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        explain:
+          sample_rows: 5000
+          random_state: 42
+          top_k: 15
+          min_measured_rows: 50
+          min_abs_spearman: 0.3
+          expected_direction:
+            HR: 1
+            Resp: 1
+            MAP: -1
+            SBP: -1
+            Lactate: 1
+            Creatinine: 1
+            BUN: 1
+        train.model: hist_gradient_boosting
+    outs:
+    - path: metrics/shap.json
+      hash: md5
+      md5: 38127f013ef7cf0e8073ae3346d7a7ca
+      size: 7305
+    - path: reports/figures/shap_beeswarm.png
+      hash: md5
+      md5: b226151d14165a107470725fda2feaef
+      size: 177032
+    - path: reports/figures/shap_importance.png
+      hash: md5
+      md5: c6f2e17e9e0fa36f81f505e6651f649b
+      size: 48503
