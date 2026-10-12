@@ -9,6 +9,9 @@ Two outputs, both computed on a sample of the held-out test split:
   the Spearman correlation between the measured value and its SHAP contribution must have
   the clinically expected sign. ``tests/test_explainability.py`` turns these into release gates.
 
+It also explains, one by one, the API examples named in ``explain.examples``: a table of
+contributions in metrics/shap.json and a waterfall figure per example.
+
 SHAP values are in log-odds (the booster's raw output), not probability points: the model is
 trained with balanced class weights, so its probabilities are not calibrated risks.
 """
@@ -175,6 +178,60 @@ def plot_beeswarm(exp: Explanation, ranking: list[str], top_k: int):
     return path
 
 
+def explain_record(model: Pipeline, record: dict) -> Explanation:
+    """Return the SHAP explanation of one record shaped like a /predict request (unsent fields are NaN)."""
+    return explain(model, pd.DataFrame([record]).reindex(columns=list(model.feature_names_in_)))
+
+
+def _risk(log_odds: float) -> float:
+    """Return the probability the booster outputs for a raw score (the logistic function)."""
+    return float(1.0 / (1.0 + np.exp(-log_odds)))
+
+
+def patient_table(exp: Explanation) -> dict:
+    """Return how one patient's risk is built: value, contribution and measured part per input.
+
+    Inputs are ranked by the size of their contribution. ``measured`` is the part that comes
+    only from the missing-value indicator, i.e. from the variable having been measured.
+    """
+    row, raw, values = exp.grouped.iloc[0], exp.raw.iloc[0], exp.values.iloc[0]
+    contributions = {}
+    for col in sorted(row.index, key=lambda name: abs(row[name]), reverse=True):
+        indicator = f"{INDICATOR_PREFIX}{col}"
+        contributions[col] = {
+            "value": None if pd.isna(raw[col]) else float(raw[col]),
+            "contribution": float(row[col]),
+            "measured": float(values[indicator]) if indicator in values else 0.0,
+        }
+    output = exp.base_value + float(row.sum())
+    return {
+        "base_value": exp.base_value,
+        "output": output,
+        "base_risk": _risk(exp.base_value),
+        "risk": _risk(output),
+        "contributions": contributions,
+    }
+
+
+def plot_waterfall(exp: Explanation, name: str, top_k: int):
+    """Save a SHAP waterfall of one patient: how each input moves the risk from the average to its own."""
+    one = shap.Explanation(
+        values=exp.grouped.iloc[0].to_numpy(),
+        base_values=exp.base_value,
+        data=exp.raw.iloc[0].to_numpy(dtype=float),
+        feature_names=list(exp.raw.columns),
+    )
+    shap.plots.waterfall(one, max_display=top_k, show=False)
+    figure = plt.gcf()
+    output = exp.base_value + float(exp.grouped.iloc[0].sum())
+    figure.suptitle(
+        f"{name}: risk {_risk(exp.base_value):.2f} -> {_risk(output):.2f} (contributions in log-odds)", y=1.0
+    )
+    path = save_figure(figure, f"shap_waterfall_{name}")
+    plt.close(figure)
+    return path
+
+
 def sample_test_split(params: dict) -> pd.DataFrame:
     """Return the fixed sample of test-split features that the stage and the release gates explain."""
     settings = params["explain"]
@@ -182,7 +239,9 @@ def sample_test_split(params: dict) -> pd.DataFrame:
     return x_test.sample(n=min(settings["sample_rows"], len(x_test)), random_state=settings["random_state"])
 
 
-def build_report(exp: Explanation, name: str, settings: dict, model_md5: str | None = None) -> dict:
+def build_report(
+    exp: Explanation, name: str, settings: dict, model_md5: str | None = None, examples: dict | None = None
+) -> dict:
     """Return the JSON-serialisable summary written to metrics/shap.json."""
     checks = direction_checks(exp, settings)
     return {
@@ -196,21 +255,26 @@ def build_report(exp: Explanation, name: str, settings: dict, model_md5: str | N
         "direction_checks_passed": all(check["passed"] for check in checks.values()),
         "direction_checks": checks,
         "importance": importance(exp),
+        "examples": examples or {},
     }
 
 
 def main() -> None:
-    """Explain the shipped model on a test sample and write metrics/shap.json and two figures."""
+    """Explain the shipped model on a test sample and the API examples; write metrics/shap.json and figures."""
     params = load_params()
     settings, name = params["explain"], params["train"]["model"]
+    model = load_model()
 
-    exp = explain(load_model(), sample_test_split(params))
-    report = build_report(exp, name, settings, file_md5(MODEL_PATH))
+    exp = explain(model, sample_test_split(params))
+    patients = {key: explain_record(model, params["api"]["examples"][key]["record"]) for key in settings["examples"]}
+    examples = {key: patient_table(patient) for key, patient in patients.items()}
+    report = build_report(exp, name, settings, file_md5(MODEL_PATH), examples)
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     write_json(SHAP_PATH, report)  # LF on every OS, so dvc.lock hashes match across clones
     ranking = list(report["importance"])
     figures = [plot_importance(report["importance"], settings["top_k"]), plot_beeswarm(exp, ranking, settings["top_k"])]
+    figures += [plot_waterfall(patient, key, settings["waterfall_top_k"]) for key, patient in patients.items()]
 
     mlflow.set_tracking_uri(get_tracking_uri(params))
     mlflow.set_experiment(params["mlflow"]["experiment_name"])

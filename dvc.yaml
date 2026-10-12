@@ -119,6 +119,7 @@ stages:
       - dataset
       - explain
       - train.model
+      - api.examples
     metrics:
       - metrics/shap.json:
           cache: false
@@ -126,6 +127,8 @@ stages:
       - reports/figures/shap_importance.png:
           cache: false
       - reports/figures/shap_beeswarm.png:
+          cache: false
+      - reports/figures/shap_waterfall_deteriorating.png:   # one per name in explain.examples
           cache: false
 
   # "Reporting energy in the model card": the shipped model's CodeCarbon row becomes the

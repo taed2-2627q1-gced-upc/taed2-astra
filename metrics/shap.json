@@ -257,5 +257,220 @@
       "value": 0.0002114664241819753,
       "missing_indicator": 0.0006705823173732603
     }
+  },
+  "examples": {
+    "deteriorating": {
+      "base_value": -1.0521282228194948,
+      "output": 1.802406782464071,
+      "base_risk": 0.2588166330834917,
+      "risk": 0.858441658675982,
+      "contributions": {
+        "Temp": {
+          "value": 38.6,
+          "contribution": 0.6878651605093481,
+          "measured": -0.07970688815373703
+        },
+        "FiO2": {
+          "value": 0.4,
+          "contribution": 0.474251348796649,
+          "measured": 0.4741495567193675
+        },
+        "Unit1": {
+          "value": 1.0,
+          "contribution": 0.38308926408083566,
+          "measured": -0.08992273785900246
+        },
+        "Lactate": {
+          "value": 3.1,
+          "contribution": 0.3747192448087366,
+          "measured": 0.32604939879252454
+        },
+        "HospAdmTime": {
+          "value": -12.5,
+          "contribution": -0.2718724761195344,
+          "measured": 0.0
+        },
+        "HR": {
+          "value": 104.0,
+          "contribution": 0.2590770938815748,
+          "measured": -0.008333005611504223
+        },
+        "WBC": {
+          "value": 15.2,
+          "contribution": 0.20905660775814114,
+          "measured": 0.001830718486091811
+        },
+        "Resp": {
+          "value": 26.0,
+          "contribution": 0.14748217668115618,
+          "measured": 0.004521734194049633
+        },
+        "MAP": {
+          "value": 68.0,
+          "contribution": 0.11011178783913167,
+          "measured": 0.020470398065996924
+        },
+        "Creatinine": {
+          "value": 1.4,
+          "contribution": 0.1016294512196104,
+          "measured": -0.0011282598960832683
+        },
+        "Age": {
+          "value": 67.0,
+          "contribution": 0.0868445807505264,
+          "measured": 0.0
+        },
+        "DBP": {
+          "value": 52.0,
+          "contribution": 0.05779149374799032,
+          "measured": 0.018890200647037673
+        },
+        "Hour": {
+          "value": 5.0,
+          "contribution": 0.052867736042665266,
+          "measured": 0.0
+        },
+        "Unit2": {
+          "value": 0.0,
+          "contribution": 0.03901934622555395,
+          "measured": 0.0
+        },
+        "Gender": {
+          "value": 1.0,
+          "contribution": 0.030755894103034,
+          "measured": 0.0
+        },
+        "pH": {
+          "value": null,
+          "contribution": 0.027933480023490758,
+          "measured": 0.02841068563943321
+        },
+        "SBP": {
+          "value": 102.0,
+          "contribution": 0.027498402355409526,
+          "measured": -0.04350038067356739
+        },
+        "Platelets": {
+          "value": 140.0,
+          "contribution": 0.024564031630475873,
+          "measured": -0.0033313761081361012
+        },
+        "ICULOS": {
+          "value": 6.0,
+          "contribution": -0.02160922286339997,
+          "measured": 0.0
+        },
+        "Glucose": {
+          "value": null,
+          "contribution": 0.019669904679703077,
+          "measured": 0.01364104443937314
+        },
+        "Chloride": {
+          "value": null,
+          "contribution": 0.019410695942121834,
+          "measured": 0.011990747850665819
+        },
+        "BUN": {
+          "value": null,
+          "contribution": 0.012596339008333835,
+          "measured": 0.01455881303907593
+        },
+        "O2Sat": {
+          "value": 94.0,
+          "contribution": -0.009841313551045958,
+          "measured": 8.052607763509338e-05
+        },
+        "EtCO2": {
+          "value": null,
+          "contribution": -0.007400504351256791,
+          "measured": -0.01333676664176028
+        },
+        "Calcium": {
+          "value": null,
+          "contribution": 0.007064214258848941,
+          "measured": -0.00043999603155665763
+        },
+        "Hct": {
+          "value": null,
+          "contribution": 0.005639305625786647,
+          "measured": -0.0001428884546465304
+        },
+        "PaCO2": {
+          "value": null,
+          "contribution": 0.0033976527239517993,
+          "measured": -0.001153748161337655
+        },
+        "PTT": {
+          "value": null,
+          "contribution": 0.002049252484150667,
+          "measured": -0.000357396739874665
+        },
+        "Alkalinephos": {
+          "value": null,
+          "contribution": -0.0017777877553845933,
+          "measured": -0.0016731093593794532
+        },
+        "Hgb": {
+          "value": null,
+          "contribution": 0.0015817525747250686,
+          "measured": -8.241291040871896e-05
+        },
+        "Magnesium": {
+          "value": null,
+          "contribution": 0.0012830853960488085,
+          "measured": -0.00010677926463554514
+        },
+        "HCO3": {
+          "value": null,
+          "contribution": 0.0009257787781902469,
+          "measured": 0.0003645699519594877
+        },
+        "BaseExcess": {
+          "value": null,
+          "contribution": -0.0006822229976642402,
+          "measured": -0.0004029341653064034
+        },
+        "Fibrinogen": {
+          "value": null,
+          "contribution": 0.0006747172774955483,
+          "measured": -0.00012005273896026263
+        },
+        "Bilirubin_total": {
+          "value": null,
+          "contribution": -0.0005106140144019036,
+          "measured": -5.4823030446533885e-05
+        },
+        "TroponinI": {
+          "value": null,
+          "contribution": -0.00028579496710650644,
+          "measured": -0.0003703337288298283
+        },
+        "SaO2": {
+          "value": null,
+          "contribution": -0.00027702582368318153,
+          "measured": -0.0013724509800672542
+        },
+        "Bilirubin_direct": {
+          "value": null,
+          "contribution": -0.00024884061825840477,
+          "measured": -0.0003469334066269343
+        },
+        "Potassium": {
+          "value": null,
+          "contribution": 0.00021270474611312284,
+          "measured": -0.00012269932875925887
+        },
+        "Phosphate": {
+          "value": null,
+          "contribution": -0.00013800016115180587,
+          "measured": -7.265680827410821e-05
+        },
+        "AST": {
+          "value": null,
+          "contribution": 0.00011630455665449495,
+          "measured": -6.736588328599532e-05
+        }
+      }
+    }
   }
 }
