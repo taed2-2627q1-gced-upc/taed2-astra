@@ -60,7 +60,7 @@ runs with `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`.
 ## Pipeline
 
 `make repro` (`dvc repro`) runs
-`prepare → validate → {benchmark, train → evaluate → co2_report}` and `plots`,
+`prepare → validate → {benchmark, train → evaluate, fairness, explain, co2_report}` and `plots`,
 skipping any stage whose dependencies and params are unchanged.
 
 | Stage | Produces |
@@ -70,6 +70,8 @@ skipping any stage whose dependencies and params are unchanged.
 | `benchmark` | Every candidate on the same grouped CV folds → `metrics/benchmark.json` |
 | `train` | The shipped model → `models/model.pkl` |
 | `evaluate` | Test-split metrics → `metrics/metrics.json` |
+| `fairness` | AIF360 group-fairness audit on the test split → `metrics/fairness.json` |
+| `explain` | SHAP importance and clinical direction checks → `metrics/shap.json`, figures in `reports/figures/` |
 | `co2_report`, `plots` | Emissions in the model card, figures in `reports/figures/` |
 
 **After a repro, run `dvc push` before opening a pull request.** Otherwise `dvc.lock`
@@ -96,7 +98,8 @@ coverage floor, and Pynblint.
 | Check | Where | Gate |
 |-------|-------|------|
 | Data contract (ranges, completeness, label rate, dtypes) | `validate` stage, `params.yaml: validation` | Critical expectations stop the pipeline |
-| Model release gates (ROC-AUC, PR-AUC lift, recall, slices, directional) | `tests/test_model_quality.py`, `params.yaml: model_quality` | A failing gate blocks the merge |
+| Model release gates (ROC-AUC, PR-AUC lift, recall, slices, group fairness, directional) | `tests/test_model_quality.py`, `params.yaml: model_quality` | A failing gate blocks the merge |
+| SHAP direction gates | `tests/test_explainability.py`, `params.yaml: explain` | A failing gate blocks the merge |
 | Prediction and API contract | `tests/test_predict.py`, `tests/test_api.py` | Run without data on every pull request |
 
 See [AGENTS.md](../AGENTS.md#ci-and-branch-protection) for the CI jobs that protect `main`.

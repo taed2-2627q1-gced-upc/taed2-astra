@@ -7,7 +7,7 @@ Conventions for anyone — human or AI agent — working in this repository.
 `taed2-astra`: an hourly sepsis early-warning service for ICU patients, built
 for the TAED2 course on the PhysioNet 2019 dataset. The DVC pipeline is
 implemented end to end (`prepare → validate → benchmark / train → evaluate →
-fairness, co2_report, plots`), and a FastAPI app serves the trained model. The data
+fairness, explain, co2_report, plots`), and a FastAPI app serves the trained model. The data
 contract, release gates and CO2 reporting cover Milestone 3. Milestone 4
 (deployment and a fully tested API) is in progress.
 

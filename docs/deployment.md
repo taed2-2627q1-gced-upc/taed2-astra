@@ -36,6 +36,30 @@ How this fits with the training pipeline, and the design choices behind it, is i
 | **No Docker** | One service on one VM. A container would add a build step and an image registry without isolating anything we need |
 | **`uv sync --frozen`** | Installs the exact versions in `uv.lock`, including the scikit-learn that pickled the model |
 
+## Measured capacity
+
+A load test against the live URL (10 records/request, offered rate ramped in steps)
+puts the service's ceiling at **~25 requests/second (~1,500 req/min)** — the drain rate of
+one uvicorn worker on one vCPU. It stays healthy (p95 ≈ 0.1 s) up to ~15 req/s, its p95
+crosses 1 s around 20 req/s, and at ~30 req/s offered the achieved rate pins at 25 while
+latency jumps to several seconds and requests start timing out. Errors under overload are
+origin timeouts (`502`, `ReadTimeout`), not Cloudflare rate-limiting. This is ample for a
+demo; a real load would need more workers (hence more RAM for the per-worker model copy) or
+a second instance.
+
+**Memory under oversized requests.** A second test probed the memory vector the
+"no reverse proxy" trade-off leaves open: deliberately oversized `/predict` bodies (far more
+than `api.max_batch_size` rows), which are rejected with `422` but only after Starlette reads
+the whole body and Pydantic parses it. Through the public URL the service never crashed
+(`NRestarts` stayed 0). Two layers absorb it: Cloudflare rejects any body over ~100 MB at its
+edge with `413` before it reaches the VM, and the tunnel's upload bandwidth throttles
+concurrent bodies so they arrive spread out rather than all at once. Sixteen concurrent 84 MB
+bodies (1.3 GB total) only pushed the worker to ~2.6 GB peak, with ~0.9 GB RAM still free.
+An actual out-of-memory kill is only reachable **direct to the origin** (`127.0.0.1:8000`),
+which has neither the edge cap nor the bandwidth limit — i.e. not from a public client. If
+the VM is ever exposed without Cloudflare in front, add a body-size limit (a reverse proxy,
+or uvicorn `--limit-max-requests`/a proxy's `client_max_body_size`).
+
 ## One-time setup
 
 Run these on the VM over SSH. Each step only has to be done once per VM.
