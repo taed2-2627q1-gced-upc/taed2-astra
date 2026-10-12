@@ -560,3 +560,79 @@ stages:
       hash: md5
       md5: bf260eadbaac9845e665a52d8043bc00
       size: 892
+  explain:
+    cmd: python -X utf8 -m taed2_astra.modeling.explain
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 9e9a66a4ca2275f1d127abfc7ceaad4b
+      size: 3461516
+    - path: models/model.pkl
+      hash: md5
+      md5: 36fc5a13ebad684577a7e02442c79a2e
+      size: 1110933
+    - path: src/taed2_astra/config.py
+      hash: md5
+      md5: 01adcbe733f32246ba5de6dee17f553c
+      size: 2792
+    - path: src/taed2_astra/features/build_features.py
+      hash: md5
+      md5: d1ba19bb6d6793dde2d49cf076542e79
+      size: 1925
+    - path: src/taed2_astra/modeling/explain.py
+      hash: md5
+      md5: 871d9928ae631bccdbe4c787c14d1df2
+      size: 11147
+    - path: src/taed2_astra/modeling/predict.py
+      hash: md5
+      md5: 775e955dea55905aabaffb5b67cca400
+      size: 1401
+    - path: src/taed2_astra/modeling/promote.py
+      hash: md5
+      md5: 3bb5fbc2c41a52a95ac250f25828d1f7
+      size: 2721
+    - path: src/taed2_astra/visualization/plots.py
+      hash: md5
+      md5: 937013c8d270308932bf4c479552ed1c
+      size: 3905
+    params:
+      params.yaml:
+        dataset:
+          name: prediction-of-sepsis
+          raw_file: prediction-of-sepsis.zip
+          raw_member: Dataset.csv
+          target: SepsisLabel
+          classes:
+          - 0
+          - 1
+          group: Patient_ID
+          drop:
+          - 'Unnamed: 0'
+        explain:
+          sample_rows: 5000
+          random_state: 42
+          top_k: 15
+          min_measured_rows: 50
+          min_abs_spearman: 0.3
+          expected_direction:
+            HR: 1
+            Resp: 1
+            MAP: -1
+            SBP: -1
+            Lactate: 1
+            Creatinine: 1
+            BUN: 1
+        train.model: hist_gradient_boosting
+    outs:
+    - path: metrics/shap.json
+      hash: md5
+      md5: 9fb5b70db25dcedd9f9a95321a3ab41d
+      size: 7096
+    - path: reports/figures/shap_beeswarm.png
+      hash: md5
+      md5: 5df18d23010d0721f0e4b21b9ccef215
+      size: 177862
+    - path: reports/figures/shap_importance.png
+      hash: md5
+      md5: c6f2e17e9e0fa36f81f505e6651f649b
+      size: 48503

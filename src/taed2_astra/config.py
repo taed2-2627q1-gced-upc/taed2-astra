@@ -40,6 +40,7 @@ TEST_PATH = PROCESSED_DATA_DIR / "test.parquet"
 METRICS_PATH = METRICS_DIR / "metrics.json"
 BENCHMARK_PATH = METRICS_DIR / "benchmark.json"
 FAIRNESS_PATH = METRICS_DIR / "fairness.json"
+SHAP_PATH = METRICS_DIR / "shap.json"
 
 
 def load_params(path: Path = PARAMS_PATH) -> dict:

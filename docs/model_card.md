@@ -157,6 +157,40 @@ Definitions live in `params.yaml: fairness`:
   ensembles out. Group-specific thresholds (post-processing) were rejected: they would make the
   served decision depend on the patient's sex.
 
+## Explainability (SHAP)
+
+The `explain` stage (`src/taed2_astra/modeling/explain.py`) runs SHAP's `TreeExplainer` on the
+booster for 5,000 test rows (`params.yaml: explain`) and writes `metrics/shap.json`,
+`reports/figures/shap_importance.png` and `reports/figures/shap_beeswarm.png`. Contributions are
+in log-odds, the booster's raw output; they add back to it exactly (max error ~1e-14). Each input's
+value and its missing-value indicator are reported separately and summed per clinical variable.
+
+- **What the model leans on** (mean |SHAP|, value + indicator): `HospAdmTime` 0.38,
+  `ICULOS` 0.32, `Unit1` 0.28, `HR` 0.26, `Temp` 0.18, `Age` 0.17, `MAP` 0.14, `Resp` 0.13.
+  Context and administrative columns rank above every vital sign and every lab. That is consistent
+  with the model partly learning *where* and *when* a patient is, not only how sick they are,
+  and it is a reason for caution before using it on another hospital.
+- **Missingness:** 24 % of all |SHAP| comes from missing-value indicators. For `Temp`, more
+  than half of its contribution (0.105 of 0.18) comes from whether it was measured; `FiO2`,
+  `EtCO2` and `Unit1` show the same pattern. This quantifies the "learns clinician behaviour"
+  limitation below.
+- **Clinical direction checks** (release gates in `tests/test_explainability.py`): on rows where
+  the variable was measured, the Spearman correlation between its value and its SHAP contribution
+  must have the expected sign and |rho| ≥ 0.3.
+
+  | Variable | Expected | Spearman | Measured rows |
+  |---|---|---|---|
+  | HR | higher → more risk | +0.97 | 4,528 |
+  | Resp | higher → more risk | +0.86 | 4,234 |
+  | MAP | lower → more risk | −0.90 | 4,392 |
+  | SBP | lower → more risk | −0.75 | 4,304 |
+  | Lactate | higher → more risk | +0.53 | 127 |
+  | Creatinine | higher → more risk | +0.93 | 292 |
+  | BUN | higher → more risk | +0.86 | 326 |
+
+  `Temp` is deliberately not checked: fever and hypothermia are both sepsis signs, so a
+  monotonic test would be wrong for it.
+
 ## Limitations
 
 - **Per-hour, memoryless.** Each row is scored on its own; the model sees no trend
@@ -165,6 +199,7 @@ Definitions live in `params.yaml: fairness`:
 - **Learns clinician behaviour.** The missing-value indicators are among the strongest
   signals: sicker patients get more labs. That signal will not transfer to a unit with different
   ordering habits, and it means the model partly predicts "someone is already worried".
+  SHAP puts a number on it: 24 % of the model's reasoning comes from these indicators.
 - **Two hospitals, US, ICU only.** No evidence of generalisation elsewhere; the hidden
   challenge hospital is not in our data.
 - **Undertrained at the margin.** Early stopping never fired in 300 rounds, so more
@@ -221,8 +256,9 @@ What the numbers changed in our decisions:
 
 ## Quality gates
 
-A model only ships if `tests/test_model_quality.py` passes on the held-out test split.
-Thresholds live in `params.yaml` (`model_quality`) and sit below the current scores so a real
+A model only ships if `tests/test_model_quality.py` and the gates in `tests/test_explainability.py`
+pass on the held-out test split.
+Thresholds live in `params.yaml` (`model_quality`, and `explain` for the SHAP checks) and sit below the current scores so a real
 regression fails, not noise:
 
 | Gate | Threshold | Current |
@@ -235,6 +271,7 @@ regression fails, not noise:
 | \|Average odds difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.032 (Gender), 0.019 (Age) |
 | Mean risk rises when HR +40, Temp +2 °C, Resp +15, MAP −30, Lactate +4 | > 0 | all rise |
 | Identifiers (`Patient_ID`) and the label are not model inputs | — | pass |
+| SHAP direction: HR, Resp, Lactate, Creatinine, BUN push up when higher; MAP, SBP when lower (`tests/test_explainability.py`) | same sign, \|Spearman\| ≥ 0.3 | all pass |
 
 The Unit1 gap (0.82 vs 0.77 ROC-AUC between ICU types) is within the gate but is the largest
 subgroup difference observed and should be watched if the model is retrained.

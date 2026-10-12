@@ -32,6 +32,12 @@ dependencies = [
     "codecarbon>=2.4",
     # data validation
     "great-expectations>=1.0",
+    # explainability
+    "shap>=0.46",
+    # numba (via shap) dropped Intel-Mac wheels after 0.61, and 0.61 needs numpy < 2.3. Without these pins
+    # uv falls back to numba 0.53 there, which only ships as source and cannot be installed.
+    "numba>=0.59,<0.62; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "numpy<2.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     # serving
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
@@ -70,6 +76,7 @@ astra-benchmark = "taed2_astra.modeling.benchmark:main"
 astra-train     = "taed2_astra.modeling.train:main"
 astra-evaluate  = "taed2_astra.modeling.evaluate:main"
 astra-fairness  = "taed2_astra.modeling.fairness:main"
+astra-explain   = "taed2_astra.modeling.explain:main"
 astra-co2       = "taed2_astra.energy:main"
 astra-plots     = "taed2_astra.visualization.plots:main"
 

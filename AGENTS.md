@@ -102,6 +102,7 @@ make deploy     # on the VM only: pull, restart, smoke-test (docs/deployment.md)
 | Fairness audit and Reweighing: metrics, weights, serving never imports AIF360 | `tests/test_fairness.py` | No |
 | Prediction contract: determinism, key order, unknown or missing fields | `tests/test_predict.py` | No |
 | Release gates: performance, slices, group fairness, directional behaviour | `tests/test_model_quality.py` (`integration`) | Yes: skips without `models/model.pkl` |
+| Explainability: SHAP grouping and additivity (unit); clinical direction of SHAP contributions (gates) | `tests/test_explainability.py` (gates are `integration`) | Gates only: skip without `models/model.pkl` |
 | Data contract on the real splits | `validate` DVC stage (Great Expectations) | Yes |
 
 A test's docstring says *why* the behaviour matters, not what the assert does.
