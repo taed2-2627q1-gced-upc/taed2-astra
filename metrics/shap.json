@@ -1,5 +1,6 @@
 {
   "model": "hist_gradient_boosting",
+  "model_md5": "36fc5a13ebad684577a7e02442c79a2e",
   "output": "log-odds",
   "n_rows": 5000,
   "base_value": -1.0521282228194948,

@@ -13,7 +13,6 @@ SHAP values are in log-odds (the booster's raw output), not probability points: 
 trained with balanced class weights, so its probabilities are not calibrated risks.
 """
 
-import json
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
@@ -26,14 +25,17 @@ from sklearn.pipeline import Pipeline
 
 from taed2_astra.config import (
     METRICS_DIR,
+    MODEL_PATH,
     SHAP_PATH,
     TEST_PATH,
     get_logger,
     get_tracking_uri,
     load_params,
+    write_json,
 )
 from taed2_astra.features.build_features import split_xy
 from taed2_astra.modeling.predict import load_model
+from taed2_astra.modeling.promote import file_md5
 from taed2_astra.visualization.plots import save_figure
 
 log = get_logger(__name__)
@@ -173,11 +175,19 @@ def plot_beeswarm(exp: Explanation, ranking: list[str], top_k: int):
     return path
 
 
-def build_report(exp: Explanation, name: str, settings: dict) -> dict:
+def sample_test_split(params: dict) -> pd.DataFrame:
+    """Return the fixed sample of test-split features that the stage and the release gates explain."""
+    settings = params["explain"]
+    x_test, _ = split_xy(pd.read_parquet(TEST_PATH), params["dataset"])
+    return x_test.sample(n=min(settings["sample_rows"], len(x_test)), random_state=settings["random_state"])
+
+
+def build_report(exp: Explanation, name: str, settings: dict, model_md5: str | None = None) -> dict:
     """Return the JSON-serialisable summary written to metrics/shap.json."""
     checks = direction_checks(exp, settings)
     return {
         "model": name,
+        "model_md5": model_md5,  # the checksum dvc.lock records: ties the report to one model file
         "output": "log-odds",
         "n_rows": len(exp.raw),
         "base_value": exp.base_value,
@@ -194,15 +204,11 @@ def main() -> None:
     params = load_params()
     settings, name = params["explain"], params["train"]["model"]
 
-    x_test, _ = split_xy(pd.read_parquet(TEST_PATH), params["dataset"])
-    sample = x_test.sample(n=min(settings["sample_rows"], len(x_test)), random_state=settings["random_state"])
-    exp = explain(load_model(), sample)
-    report = build_report(exp, name, settings)
+    exp = explain(load_model(), sample_test_split(params))
+    report = build_report(exp, name, settings, file_md5(MODEL_PATH))
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(SHAP_PATH, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(SHAP_PATH, report)  # LF on every OS, so dvc.lock hashes match across clones
     ranking = list(report["importance"])
     figures = [plot_importance(report["importance"], settings["top_k"]), plot_beeswarm(exp, ranking, settings["top_k"])]
 

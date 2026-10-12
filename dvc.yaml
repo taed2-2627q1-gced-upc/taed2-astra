@@ -20,9 +20,11 @@ stages:
     cmd: python -X utf8 -m taed2_astra.data.validate
     deps:
       - data/processed/train.parquet
+      - data/processed/test.parquet
       - src/taed2_astra/data/validate.py
     params:
       - dataset
+      - validation
     outs:
       - reports/data_validation.json:
           cache: false   # small and reviewable: committed to Git, not the DVC cache
@@ -35,6 +37,7 @@ stages:
       - src/taed2_astra/modeling/benchmark.py
       - src/taed2_astra/modeling/registry.py
       - src/taed2_astra/modeling/evaluate.py
+      - src/taed2_astra/modeling/fairness.py
       - src/taed2_astra/features/build_features.py
       - src/taed2_astra/energy.py
     params:
@@ -42,6 +45,7 @@ stages:
       - train
       - benchmark
       - evaluate.threshold
+      - fairness
     metrics:
       - metrics/benchmark.json:
           cache: false
@@ -53,11 +57,13 @@ stages:
       - reports/data_validation.json
       - src/taed2_astra/modeling/train.py
       - src/taed2_astra/modeling/registry.py
+      - src/taed2_astra/modeling/fairness.py
       - src/taed2_astra/features/build_features.py
       - src/taed2_astra/energy.py
     params:
       - dataset
       - train
+      - fairness
     outs:
       - models/model.pkl
 
@@ -77,6 +83,25 @@ stages:
       - metrics/metrics.json:
           cache: false
 
+  # Group fairness of the shipped model's decisions on the test split (AIF360), per fairness.attributes.
+  # The gates on these numbers live in tests/test_model_quality.py, next to the other release gates.
+  fairness:
+    cmd: python -X utf8 -m taed2_astra.modeling.fairness
+    deps:
+      - data/processed/test.parquet
+      - models/model.pkl
+      - src/taed2_astra/modeling/fairness.py
+      - src/taed2_astra/modeling/predict.py
+      - src/taed2_astra/features/build_features.py
+    params:
+      - dataset
+      - evaluate.threshold
+      - fairness.favorable_label
+      - fairness.attributes
+    metrics:
+      - metrics/fairness.json:
+          cache: false
+
   # SHAP explainability: global importance (value vs missing-indicator) and the clinical
   # direction checks that tests/test_explainability.py turns into release gates.
   explain:
@@ -85,6 +110,7 @@ stages:
       - data/processed/test.parquet
       - models/model.pkl
       - src/taed2_astra/modeling/explain.py
+      - src/taed2_astra/modeling/predict.py
       - src/taed2_astra/features/build_features.py
     params:
       - dataset
@@ -93,9 +119,11 @@ stages:
     metrics:
       - metrics/shap.json:
           cache: false
-    outs:   # figures are gitignored (/reports/figures/*), so DVC caches them: `dvc pull` fetches them
-      - reports/figures/shap_importance.png
-      - reports/figures/shap_beeswarm.png
+    outs:   # small report evidence committed to Git, like the sustainability charts of the plots stage
+      - reports/figures/shap_importance.png:
+          cache: false
+      - reports/figures/shap_beeswarm.png:
+          cache: false
 
   # "Reporting energy in the model card": the shipped model's CodeCarbon row becomes the
   # Hugging Face co2_eq_emissions metadata at the top of docs/model_card.md. model.pkl and
@@ -111,3 +139,15 @@ stages:
     params:
       - train.model
       - model_card
+
+  # Sustainability figures for the report and model card, redrawn whenever CodeCarbon logs a new run.
+  plots:
+    cmd: python -X utf8 -m taed2_astra.visualization.plots
+    deps:
+      - reports/emissions/emissions.csv
+      - src/taed2_astra/visualization/plots.py
+    outs:
+      - reports/figures/energy_consumed_per_model.png:
+          cache: false
+      - reports/figures/duration_vs_energy.png:
+          cache: false

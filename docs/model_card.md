@@ -1,12 +1,12 @@
 ---
 co2_eq_emissions:
-  emissions: 0.0901
-  power_consumption: 0.000518
+  emissions: 0.178
+  power_consumption: 0.001022
   source: CodeCarbon 3.3.1 (EmissionsTracker), reports/emissions/emissions.csv
   training_type: pre-training
   geographical_location: catalonia, Spain
-  hardware_used: 12 x 13th Gen Intel(R) Core(TM) i7-1355U (CPU)
-  training_time: 107.9
+  hardware_used: 12 x Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz (CPU), 1 x NVIDIA GeForce GTX 1650 (GPU)
+  training_time: 93.2
   optimization_techniques: histogram-based gradient boosting (binned features); ensembles rejected because
     their extra energy bought no meaningful PR-AUC gain
 model_info:
@@ -47,6 +47,9 @@ model_info:
     `max_leaf_nodes=31`, `min_samples_leaf=100`, `class_weight="balanced"`, `random_state=42`.
     Early stopping (`auto`, 10 % validation fraction) never triggered — all 300 rounds were used.
   - *Artefact:* `models/model.pkl`, 1.11 MB, DVC-tracked; also logged to MLflow (cloudpickle).
+  - *Registry:* `make promote` registers this file in the MLflow Model Registry as
+    `taed2-astra-sepsis` (tagged with its DVC MD5) and points the `@champion` alias at it,
+    only after the release gates pass.
 - **Training date:** 2026-09-19
 - **MLflow run IDs** (experiment `taed2-astra`, <https://dagshub.com/Santi-49/taed2-astra.mlflow>):
   - `train-hist_gradient_boosting`: `fa6bf90f20b243bc80768d0f56e6fb5f`
@@ -120,6 +123,40 @@ Ranked by PR-AUC, the honest metric at 1.8 % prevalence (mean ± std over folds)
   inflates positive probabilities, 0.5 corresponds to a high-recall / low-precision regime.
   The threshold-free metrics (ROC-AUC, PR-AUC) do not depend on it.
 
+## Fairness
+
+The `fairness` stage audits the shipped model's decisions on the test split with
+[AI Fairness 360](https://github.com/Trusted-AI/AIF360) and writes `metrics/fairness.json`.
+Definitions live in `params.yaml: fairness`:
+
+- **Favorable outcome = an alert.** For a septic patient, being flagged is what brings a
+  clinician to the bedside, so the metrics ask who is *denied* an alert.
+- **Groups:** `Gender` (reference: male) and `Age` cut at 65 (reference: under 65). Metrics
+  are *other group minus reference*. Race, ethnicity and hospital are not in the data, so
+  they cannot be audited.
+- **Unit of analysis:** the ICU hour, the same as every other metric in this card.
+
+| Attribute | Recall (other / reference) | Equal opportunity diff. | Average odds diff. | Disparate impact | Sepsis prevalence (other / reference) |
+|---|---|---|---|---|---|
+| `Gender` (female vs male) | 0.612 / 0.654 | −0.042 | −0.032 | 0.871 | 1.44 % / 1.89 % |
+| `Age` (≥ 65 vs < 65) | 0.647 / 0.628 | +0.019 | +0.019 | 1.115 | 1.75 % / 1.63 % |
+
+- **Reading:** septic women are flagged a little less often than septic men (61 % vs 65 % of
+  label-window hours). Both gaps are within the release gates (|difference| ≤ 0.10).
+- **Why disparate impact is not a gate:** sepsis is less common in women in this data, so an
+  equal alert rate would mean *over*-alerting one group. Only error-rate parity (equal
+  opportunity, average odds) is enforced.
+- **Mitigation available, not shipped.** `fairness.mitigation.method: reweighing` trains with
+  AIF360 Reweighing weights on `Gender`. It was compared with no mitigation on the benchmark's
+  patient-grouped 3-fold CV over the training split (mean ± std over folds), so the test split
+  played no part in the choice and the table above stays an unbiased final audit. Reweighing
+  narrowed the `Gender` gaps (equal opportunity −0.016 ± 0.061 → −0.004 ± 0.045, average odds
+  −0.019 ± 0.037 → −0.006 ± 0.027, disparate impact 0.859 → 0.938) at no real cost (recall
+  0.556 → 0.551, PR-AUC 0.0898 → 0.0897). The unweighted model ships: its gaps already pass the
+  gates, and the improvement is smaller than the fold-to-fold spread, the same rule that keeps
+  ensembles out. Group-specific thresholds (post-processing) were rejected: they would make the
+  served decision depend on the patient's sex.
+
 ## Explainability (SHAP)
 
 The `explain` stage (`src/taed2_astra/modeling/explain.py`) runs SHAP's `TreeExplainer` on the
@@ -175,16 +212,66 @@ value and its missing-value indicator are reported separately and summed per cli
 
 ## Sustainability
 
-CodeCarbon on a single laptop CPU (Intel i7-9750H, Spain grid), `reports/emissions/emissions.csv`:
+CodeCarbon 3.3.1 on one laptop (12 × Intel i7-9750H CPU plus a GTX 1650 GPU, Catalonia grid),
+for the `dvc repro` of 2026-10-06 logged in `reports/emissions/emissions.csv`. The same numbers
+are in the front matter above and in each MLflow run. An earlier, interrupted
+`logistic_regression` row at 15:21 that day is not counted.
 
-- **Shipped model training** (`train-hist_gradient_boosting`): 109 s, 0.0013 kWh,
-  **0.23 g CO2eq** (`emissions_kg_co2 = 0.000226` in the MLflow run).
-- **Full benchmark** (4 candidates × 3 folds): ~25 min compute, 0.0173 kWh, **3.0 g CO2eq**
-  in total — LR 0.15 g, HGB 0.48 g, soft voting 0.57 g, stacking 1.81 g. Stacking alone
-  cost 60 % of the benchmark's emissions for a model that was not adopted; that is part of
-  why the ensemble decision above weighs cost, not just score.
-- **Inference** (`inference-<model>` rows): scoring the whole test split, reported in
-  `metrics/metrics.json` as `inference_duration_s`, `inference_emissions_kg_co2` and `inference_energy_kwh`.
-- **Report:** `reports/emissions/emissions.csv` (CodeCarbon's log: one row per tracked run with duration,
-  emissions, energy, location and hardware; versioned in Git), the same numbers per run in MLflow, and the
-  Hugging Face `co2_eq_emissions` metadata at the top of this file, regenerated by `dvc repro co2_report`.
+| Run | Duration | Energy | Emissions |
+|---|---|---|---|
+| Benchmark: `logistic_regression` (3 folds) | 53 s | 0.57 Wh | 0.10 g CO2eq |
+| Benchmark: `hist_gradient_boosting` (3 folds) | 200 s | 2.33 Wh | 0.40 g |
+| Benchmark: `ensemble_soft` (3 folds) | 222 s | 2.57 Wh | 0.45 g |
+| Benchmark: `ensemble_stacking` (3 folds) | 705 s | 8.12 Wh | 1.41 g |
+| **Benchmark total** (4 candidates; TabPFN skipped) | 20 min | 13.58 Wh | **2.36 g** |
+| **Shipped model training** (`train-hist_gradient_boosting`) | 93 s | 1.02 Wh | **0.18 g** |
+| Inference on the test split (310,997 rows) | 6.2 s | 0.027 Wh | 0.005 g |
+
+What the numbers changed in our decisions:
+
+- **Model selection is where the energy goes.** The benchmark cost 13× the final training
+  run. Stacking alone was 60 % of it, because its internal 3-fold CV refits both members
+  inside every outer fold, and it already failed the ensemble rule on CV (+0.0014 PR-AUC,
+  below the 0.0025 fold std).
+  A future benchmark should drop candidates that already failed the selection rule, or run
+  `benchmark.max_rows` on a sample first.
+- **Soft voting was not the expensive option.** Its benchmark energy was within 10 % of
+  gradient boosting alone (the logistic member is cheap), so it was rejected for latency,
+  maintenance and calibration, not energy. The card says so rather than claiming a green win
+  it did not earn.
+- **Serving is negligible next to training.** About 0.09 mWh and 0.015 mg CO2eq per 1,000
+  predictions, so retraining frequency, not request volume, dominates the footprint
+  of this component.
+- **Figures:** `reports/figures/energy_consumed_per_model.png` and
+  `reports/figures/duration_vs_energy.png`, redrawn by `dvc repro plots`.
+- **Caveat:** on a laptop CodeCarbon estimates CPU power rather than metering it, so the
+  values are good for comparing candidates on the same machine, not as absolute measurements.
+  The 2026-09-28 run of the same code on an i7-1355U logged about half the energy for
+  training and most benchmark candidates (CodeCarbon estimated ~7 W of CPU power there versus
+  ~30 W here). Stacking is the exception: it ran 2.2× longer there, so its energy was similar.
+  The conclusions held (stacking dominates, soft voting costs about the same as gradient
+  boosting), but the ratios moved (benchmark 19× training there, 13× here).
+  The GPU is idle (scikit-learn runs on the CPU), but CodeCarbon still counts its ~2 W draw,
+  about 5 % of each run's energy.
+
+## Quality gates
+
+A model only ships if `tests/test_model_quality.py` and the gates in `tests/test_explainability.py`
+pass on the held-out test split.
+Thresholds live in `params.yaml` (`model_quality`, and `explain` for the SHAP checks) and sit below the current scores so a real
+regression fails, not noise:
+
+| Gate | Threshold | Current |
+|---|---|---|
+| ROC-AUC | ≥ 0.78 | 0.809 |
+| PR-AUC lift over the positive rate | ≥ 4.0× | 5.5× |
+| Recall at `evaluate.threshold` | ≥ 0.55 | 0.638 |
+| ROC-AUC gap between slices (`Gender`, `Unit1`) | ≤ 0.10 | 0.016 (Gender), 0.045 (Unit1) |
+| \|Equal opportunity difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.042 (Gender), 0.019 (Age) |
+| \|Average odds difference\| (`Gender`, `Age`) | ≤ 0.10 | 0.032 (Gender), 0.019 (Age) |
+| Mean risk rises when HR +40, Temp +2 °C, Resp +15, MAP −30, Lactate +4 | > 0 | all rise |
+| Identifiers (`Patient_ID`) and the label are not model inputs | — | pass |
+| SHAP direction: HR, Resp, Lactate, Creatinine, BUN push up when higher; MAP, SBP when lower (`tests/test_explainability.py`) | same sign, \|Spearman\| ≥ 0.3 | all pass |
+
+The Unit1 gap (0.82 vs 0.77 ROC-AUC between ICU types) is within the gate but is the largest
+subgroup difference observed and should be watched if the model is retrained.

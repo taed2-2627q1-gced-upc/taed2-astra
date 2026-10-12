@@ -12,8 +12,15 @@
 /mlflow.db
 /reports/figures/*
 !/reports/figures/.gitkeep
+# The sustainability charts are small report evidence written by `dvc repro plots`.
+!/reports/figures/*.png
+# Rewritten by every `make lint-nb`; the committed *_before/*_after reports are the evidence.
+/reports/static_analysis/pynblint.json
 # metrics/ and reports/data_validation.json ARE committed: they are the
 # small, reviewable outputs that make a pull request diff meaningful.
+
+# --- Runtime logs: client IP addresses are personal data -----------------
+/logs/
 
 # --- Python ---------------------------------------------------------------
 __pycache__/
@@ -47,3 +54,5 @@ htmlcov/
 !.vscode/extensions.json
 !.vscode/launch.json
 .~lock.*#
+
+brag-output/

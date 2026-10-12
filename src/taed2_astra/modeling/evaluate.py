@@ -1,7 +1,5 @@
 """Stage 4: score the saved model on the held-out test split."""
 
-import json
-
 import mlflow
 import numpy as np
 import pandas as pd
@@ -24,6 +22,7 @@ from taed2_astra.config import (
     get_logger,
     get_tracking_uri,
     load_params,
+    write_json,
 )
 from taed2_astra.energy import emissions_summary
 from taed2_astra.features.build_features import split_xy
@@ -72,9 +71,7 @@ def main() -> None:
     metrics.update({f"inference_{key}": value for key, value in energy.items()})
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(METRICS_PATH, "w", encoding="utf-8") as handle:
-        json.dump(metrics, handle, indent=2)
-        handle.write("\n")  # POSIX text file: keeps pre-commit's end-of-file-fixer from rewriting it
+    write_json(METRICS_PATH, metrics)
 
     mlflow.set_tracking_uri(get_tracking_uri(params))
     mlflow.set_experiment(params["mlflow"]["experiment_name"])

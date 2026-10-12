@@ -1,0 +1,24 @@
+{
+  "Gender": {
+    "n_rows": 310997,
+    "base_rate_privileged": 0.018857152742937217,
+    "base_rate_unprivileged": 0.01436898566735471,
+    "recall_privileged": 0.653822629969419,
+    "recall_unprivileged": 0.6115326251896813,
+    "disparate_impact": 0.8710163710158969,
+    "statistical_parity_difference": -0.024829919454857186,
+    "equal_opportunity_difference": -0.042290004779737655,
+    "average_odds_difference": -0.03236217588724666
+  },
+  "Age": {
+    "n_rows": 310997,
+    "base_rate_privileged": 0.016265542384310463,
+    "base_rate_unprivileged": 0.01750285586733019,
+    "recall_privileged": 0.6284385896939171,
+    "recall_unprivileged": 0.6470367591897974,
+    "disparate_impact": 1.1148821174163872,
+    "statistical_parity_difference": 0.0197425019052771,
+    "equal_opportunity_difference": 0.018598169495880335,
+    "average_odds_difference": 0.01888827123273401
+  }
+}

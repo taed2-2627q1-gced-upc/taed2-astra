@@ -1,7 +1,7 @@
-"""SHAP explainability: unit tests on synthetic data, then release gates on metrics/shap.json.
+"""SHAP explainability: unit tests on synthetic data, then release gates on the shipped model.
 
-The unit tests need no data on disk. The gates read the report the `explain` stage commits,
-so CI checks the shipped model's reasoning without downloading the dataset.
+The unit tests need no data on disk. The gates are `integration` tests, like those in
+test_model_quality.py: they explain models/model.pkl live and skip on a fresh clone.
 """
 
 import json
@@ -12,7 +12,7 @@ import pytest
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 
-from taed2_astra.config import SHAP_PATH, load_params
+from taed2_astra.config import MODEL_PATH, SHAP_PATH, TEST_PATH, load_params
 from taed2_astra.features.build_features import build_preprocessor
 from taed2_astra.modeling import explain as explain_module
 from taed2_astra.modeling.explain import (
@@ -23,7 +23,10 @@ from taed2_astra.modeling.explain import (
     missing_indicator_share,
     plot_beeswarm,
     plot_importance,
+    sample_test_split,
 )
+from taed2_astra.modeling.predict import load_model
+from taed2_astra.modeling.promote import file_md5
 
 SETTINGS = load_params()["explain"]
 
@@ -118,29 +121,45 @@ def _save(figure, path):
     return path
 
 
-# --- Release gates: the shipped model's report, committed by `dvc repro` -----------------------
+# --- Release gates: the shipped model, explained live on the test split (`make promote`, CI) ---------
 
-requires_report = pytest.mark.skipif(not SHAP_PATH.exists(), reason="run `dvc repro explain` first")
-
-
-@pytest.fixture(name="report")
-def report_fixture() -> dict:
-    """The SHAP report of the shipped model."""
-    with open(SHAP_PATH, encoding="utf-8") as handle:
-        return json.load(handle)
+needs_model = pytest.mark.skipif(
+    not (MODEL_PATH.exists() and TEST_PATH.exists()),
+    reason="Needs models/model.pkl and the test split: run `dvc repro explain` or `dvc pull`.",
+)
 
 
-@requires_report
-def test_report_belongs_to_the_shipped_model(report):
-    """A stale report (other model, other checks, broken additivity) must not pass the gates."""
-    assert report["model"] == load_params()["train"]["model"]
-    assert set(report["direction_checks"]) == set(SETTINGS["expected_direction"])
-    assert report["max_additivity_error"] < 1e-6
+@pytest.fixture(name="live_report", scope="module")
+def live_report_fixture() -> dict:
+    """The SHAP report of models/model.pkl, recomputed now on the same sample the stage uses."""
+    params = load_params()
+    exp = explain(load_model(), sample_test_split(params))
+    return build_report(exp, params["train"]["model"], params["explain"], file_md5(MODEL_PATH))
 
 
-@requires_report
 @pytest.mark.parametrize("variable", sorted(SETTINGS["expected_direction"]))
-def test_clinical_direction(report, variable):
+@pytest.mark.integration
+@needs_model
+def test_clinical_direction(live_report, variable):
     """Worse values of this variable must push the model towards an alert, not away from it."""
-    check = report["direction_checks"][variable]
+    check = live_report["direction_checks"][variable]
     assert check["passed"], f"{variable}: {check.get('reason')}"
+
+
+@pytest.mark.integration
+@needs_model
+def test_explanation_adds_up_to_the_model_output(live_report):
+    """If base value + contributions do not rebuild the score, the explanation describes another model."""
+    assert live_report["max_additivity_error"] < 1e-6
+
+
+@pytest.mark.integration
+@needs_model
+def test_shap_file_matches_the_model_on_disk(live_report):
+    """metrics/shap.json must describe this model, or the model card is quoting a stale explanation."""
+    with open(SHAP_PATH, encoding="utf-8") as handle:
+        recorded = json.load(handle)
+    assert recorded["model_md5"] == live_report["model_md5"]
+    assert recorded["direction_checks"].keys() == live_report["direction_checks"].keys()
+    for name, row in live_report["importance"].items():
+        assert recorded["importance"][name] == pytest.approx(row, abs=1e-9)

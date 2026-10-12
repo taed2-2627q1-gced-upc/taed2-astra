@@ -66,12 +66,13 @@ def test_card_metadata_follows_the_hugging_face_schema():
     assert {m["metric"] for m in meta["model_info"]["performance_metrics"]} == {"pr_auc", "roc_auc"}
 
 
-def test_gpu_is_reported_when_codecarbon_saw_one():
-    """GPU training must show up in hardware_used."""
+@pytest.mark.parametrize("gpu_model", ["NVIDIA T4", "1 x NVIDIA T4"])
+def test_gpu_is_reported_once_when_codecarbon_saw_one(gpu_model):
+    """GPU training must show up in hardware_used, counted once: CodeCarbon 3.x already prefixes the count."""
     run = RUN.copy()
-    run["gpu_count"], run["gpu_model"] = 1, "NVIDIA T4"
+    run["gpu_count"], run["gpu_model"] = 1, gpu_model
     hardware = energy.build_card_metadata(run, {}, 1, 1, CARD)["co2_eq_emissions"]["hardware_used"]
-    assert hardware.endswith("1 x NVIDIA T4 (GPU)")
+    assert hardware.endswith(", 1 x NVIDIA T4 (GPU)")
 
 
 def test_front_matter_is_added_then_updated_without_touching_the_body(tmp_path):

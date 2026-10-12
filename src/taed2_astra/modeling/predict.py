@@ -22,13 +22,15 @@ def load_model(path: Path = MODEL_PATH) -> Pipeline:
         return pickle.load(handle)
 
 
-def predict(records: list[dict]) -> list[dict]:
+def predict(records: list[dict], model: Pipeline | None = None) -> list[dict]:
     """Score input records and return one result dict per record.
 
     Records are aligned to the columns the model was fitted on: unknown keys are
     dropped and missing ones become NaN, which the pipeline's imputer handles.
+    The API passes the model it loaded at startup; other callers get the cached one.
     """
-    model = load_model()
+    if model is None:
+        model = load_model()
     threshold = load_params()["evaluate"]["threshold"]
     frame = pd.DataFrame.from_records(records).reindex(columns=list(model.feature_names_in_))
     proba = model.predict_proba(frame)[:, 1]
