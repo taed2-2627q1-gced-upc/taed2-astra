@@ -209,8 +209,8 @@ stages:
     outs:
     - path: reports/data_validation.json
       hash: md5
-      md5: 6543e84b59e7065d500c76f3383724be
-      size: 40436
+      md5: ea44030454688a63c0b004f982272f1d
+      size: 39116
   benchmark:
     cmd: python -X utf8 -m taed2_astra.modeling.benchmark
     deps:
@@ -220,8 +220,8 @@ stages:
       size: 13834675
     - path: reports/data_validation.json
       hash: md5
-      md5: 6543e84b59e7065d500c76f3383724be
-      size: 40436
+      md5: ea44030454688a63c0b004f982272f1d
+      size: 39116
     - path: src/taed2_astra/energy.py
       hash: md5
       md5: ea19cc61b4c2eca3265d88e8245cb34d
@@ -329,8 +329,8 @@ stages:
       size: 13834675
     - path: reports/data_validation.json
       hash: md5
-      md5: 6543e84b59e7065d500c76f3383724be
-      size: 40436
+      md5: ea44030454688a63c0b004f982272f1d
+      size: 39116
     - path: src/taed2_astra/energy.py
       hash: md5
       md5: ea19cc61b4c2eca3265d88e8245cb34d
