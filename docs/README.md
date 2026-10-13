@@ -2,7 +2,7 @@
 
 | File | Purpose |
 |------|---------|
-| [system_design.md](system_design.md) | Architecture of the ML component: diagrams, patterns, what was left out and why |
+| [system_design.md](system_design.md) | Logical and physical architecture: diagrams, components, patterns and design decisions |
 | [api.md](api.md) | API reference: endpoints, input contract, errors, testing locally |
 | [deployment.md](deployment.md) | Running the API as a service on the UPC VM |
 | [development.md](development.md) | Setup, remotes, pipeline, quality assurance, tooling |

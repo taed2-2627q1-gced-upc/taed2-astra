@@ -1,79 +1,84 @@
 # System design
 
-How Astra fits together as an ML component: how a trained model gets from the pipeline
-to the API, and why the design stays this simple. Calling the API is covered in
-[api.md](api.md), running it on the VM in [deployment.md](deployment.md).
+This page describes how Astra is built, in two views:
 
-## Architecture
+- the [logical architecture](#logical-architecture): which parts the system has and how they talk to each other;
+- the [physical architecture](#physical-architecture): where each part runs.
 
-![System architecture](images/system_architecture.svg)
+How to call the API is in [api.md](api.md), and how to run it on the VM in [deployment.md](deployment.md).
+The two architecture diagrams are SVG files in [images/](images/) and can be edited directly. The request
+flow is generated from the Mermaid source further down.
 
-Astra has two halves:
+## Logical architecture
 
-- **Training** runs on a developer's laptop. The DVC pipeline turns the PhysioNet data into
-  `models/model.pkl`, which the release gates test before it is pushed to DagsHub. CI does
-  not retrain: on every pull request it re-runs the data contract and the release gates on
-  the pushed model, and checks with `dvc status` that `dvc.lock` matches the code. After
-  merging, `make promote` registers the gated model in the MLflow Model Registry as `@champion`.
-- **Serving** runs on the UPC VM. It gets the model with DVC, and the code, `params.yaml`
-  and `metrics/metrics.json` with Git. It loads them once at startup and answers requests
-  through a Cloudflare tunnel.
-- **`params.yaml`** connects the two. Both sides take the fields, their types and which are
-  required from `validation`. The bounds differ on purpose: training data is checked against
-  `validation.ranges`, while the API rejects only values outside the wider `api.limits` and
-  warns about values outside `validation.ranges`. The API also reads its threshold from it.
+![Logical architecture](images/logical_architecture.svg)
 
-<details>
-<summary>Mermaid source</summary>
+The system has two parts that meet at the trained model, `models/model.pkl`:
 
-```mermaid
-flowchart TB
-    P[/"params.yaml<br/>schema · data contract · release gates · API limits"/]
+- The **runtime flow** (blue) is the API. A request goes down through the layers and the answer goes
+  back through the routes.
+- The **development flow** (orange) is the DVC pipeline that builds the model. Each artefact it writes is
+  drawn just above the stage that writes it.
 
-    subgraph TRAINING["Training plane · developer laptop"]
-        direction LR
-        PREP[prepare] --> VAL["validate<br/>Great Expectations"] --> TRAIN[train] --> EVAL[evaluate] --> CO2["co2_report<br/>plots"]
-        VAL --> BENCH[benchmark]
-        TRAIN --> FAIR["fairness<br/>AIF360"]
-    end
+Both parts read `params.yaml`. The training data is validated against it, the API generates its request
+schema from it, and the alert threshold comes from it.
 
-    M[("models/model.pkl<br/>md5 pinned in dvc.lock")]
-    GATES["Release gates<br/>tests/test_model_quality.py<br/>locally and in CI"]
+### Layers
 
-    subgraph REMOTES["Remotes"]
-        direction LR
-        GH[("GitHub<br/>code · dvc.lock · CI")]
-        DH[("DagsHub<br/>DVC storage · MLflow runs · model registry")]
-    end
+| Layer | What it does | Code |
+|-------|--------------|------|
+| Presentation | Receives the request, validates it and returns the answer | `api/main.py`, `api/schemas.py` |
+| Feature processing | Turns each record into the feature vector the model expects | `modeling/predict.py`, `features/build_features.py` |
+| ML inference | Computes the sepsis probability and applies the threshold | `modeling/registry.py`, `modeling/predict.py` |
+| Data | Configuration and artefacts | `params.yaml`, `models/model.pkl`, `metrics/metrics.json`, MLflow |
 
-    subgraph SERVING["Serving plane · UPC VM (Ubuntu, 1 CPU, 4 GB)"]
-        direction LR
-        CFD[cloudflared] --> UV["uvicorn 127.0.0.1:8000<br/>1 worker · systemd"] --> APP["FastAPI<br/>api/main.py · api/schemas.py"] --> PRED["modeling/predict.py"] --> MV[("models/model.pkl")]
-    end
+The preprocessor and the estimator are in different layers, but they are saved together: `build_model()`
+puts both in one scikit-learn `Pipeline`, and that pipeline is what `train` pickles as `model.pkl` (the
+dashed box in the diagram). This way the API always preprocesses the data exactly as it was done when the
+model was evaluated.
 
-    CLIENT(["Client<br/>browser /docs · curl · script"]) -- HTTPS --> CF{{"Cloudflare<br/>astra.quick2query.com"}} -- tunnel --> SERVING
+### Components
 
-    P -. "validation rules" .-> TRAINING
-    TRAINING -- "dvc repro" --> M
-    GATES -. checks .-> M
-    GATES -- "make promote: register, @champion" --> DH
-    TRAINING -- "runs, metrics (MLflow)" --> DH
-    M -- "dvc push" --> DH
-    TRAINING -- "git push · pull request" --> GH
-    GH -- "make deploy: git pull<br/>code · params.yaml · metrics.json" --> SERVING
-    DH -- "dvc pull models/model.pkl" --> SERVING
-    P -. "fields and types · api.limits · threshold" .-> SERVING
-```
+| Layer | Component | Code | Responsibility |
+|-------|-----------|------|----------------|
+| Presentation | Routes | `api/main.py` | Endpoints `/`, `/health`, `/model` and `/predict`. Loads the model at startup, logs each request and returns a short `422` when the input is wrong |
+| Presentation | Request and response schemas | `api/schemas.py` | `PatientHour` (one record), `PredictionRequest`, `PredictionResponse`, `ModelInfo`, `HealthResponse`. `PatientHour` is built from `params.yaml` |
+| Presentation | Warnings | `api/schemas.py` | Flags values outside `validation.ranges` and fields that contradict each other (for example DBP above SBP). The record is still scored |
+| Feature processing | Column alignment | `predict()` in `modeling/predict.py` | Puts the fields in the order of the model's columns; a missing measurement becomes NaN. The `evaluate` stage uses the same function |
+| Feature processing | Preprocessor | `build_preprocessor()` in `features/build_features.py` | Median imputation with missing-value indicators, scaling and one-hot encoding. Columns are selected by type, not by name |
+| ML inference | Estimator | `modeling/registry.py` | The model chosen in `params.yaml` (`train.model`). Right now a `HistGradientBoostingClassifier` |
+| ML inference | Decision | `predict()` in `modeling/predict.py` | Returns `risk_probability`, and `prediction = 1` when it is at or above `evaluate.threshold` |
+| Data | Configuration | `params.yaml`, `config.py` | All tunable values and all paths |
+| Data | Artefacts | `models/model.pkl`, `metrics/metrics.json` | The model (its MD5 is in `dvc.lock`) and its scores on the test split |
+| Data | Model registry | MLflow on DagsHub | Training runs, and the approved model under the alias `@champion` |
+| Development | Pipeline | `dvc.yaml` | `prepare → validate → benchmark / train → evaluate → fairness, explain, co2_report, plots` |
+| Development | Release gates | `tests/test_model_quality.py`, `tests/test_explainability.py` | Minimum performance, gaps between subgroups, fairness and clinical direction checks |
 
-</details>
+### Interfaces
 
-## A request, step by step
+| Interface | Between | What is agreed |
+|-----------|---------|----------------|
+| `POST /predict` | Client and API | Body `{"records": [...]}` with 1 to `api.max_batch_size` records. The answer has one prediction per record, in the same order, plus `threshold` and `model_md5`. If any record is invalid the API returns `422` and scores nothing |
+| `GET /model` | Client and API | Name, MD5, threshold, accepted fields and test metrics of the model being served |
+| `GET /health` | Client and API | `200` while the service is running. Since the service only starts with a valid model, this also means it can predict |
+| `PatientHour` | `params.yaml` and API | Fields from `validation.ranges`, required fields from `validation.complete`, bounds from `api.limits`. Unknown fields, text and NaN are rejected |
+| `model.pkl` | Pipeline and API | A fitted `Pipeline` whose input columns are exactly the keys of `validation.ranges`. The API checks this at startup and does not start otherwise |
+
+### Data flows
+
+**Development flow.** `prepare` splits the data by patient, so no patient is in both train and test.
+`validate` checks both splits with Great Expectations and stops the pipeline if a critical check fails.
+`benchmark` compares the candidate models with grouped cross-validation, and `train` fits the one chosen
+in `params.yaml` and logs it to MLflow. `evaluate`, `fairness` and `explain` measure the model on the test
+split. If the release gates pass, `make promote` registers the model as `@champion`.
+
+**Runtime flow.** This is what happens with one request:
 
 ![Request flow](images/request_flow.svg)
 
-A request that breaks the input contract gets a `422` naming the field, and nothing in
-the batch is scored. A valid one is scored by the model loaded at startup, and each
-prediction comes back with any warnings and the `model_md5` of the model that answered.
+If the request breaks the input rules, the API answers `422` with the field that failed and does not score
+anything. If it is valid, the model loaded at startup scores every record, and the answer includes the
+warnings and the `model_md5` of the model.
 
 <details>
 <summary>Mermaid source</summary>
@@ -82,40 +87,124 @@ prediction comes back with any warnings and the `model_md5` of the model that an
 sequenceDiagram
     autonumber
     actor C as Client
-    participant CF as Cloudflare + cloudflared
-    participant A as FastAPI (api/main.py)
-    participant S as Pydantic schema (api/schemas.py)
-    participant P as predict() (modeling/predict.py)
+    participant CF as Cloudflare<br/>+ cloudflared
+    participant A as FastAPI routes<br/>api/main.py
+    participant S as Pydantic schema<br/>api/schemas.py
+    participant P as predict()<br/>modeling/predict.py
 
     C->>CF: POST /predict {"records": [...]}
     CF->>A: forwards to 127.0.0.1:8000
     A->>S: validate every record
-    alt breaks the contract (unknown field, impossible value, wrong type, batch size)
+    alt breaks the contract: unknown field, impossible value, wrong type, batch size
         S-->>A: errors
         A-->>C: 422, detail[].loc names the field, nothing scored
     else valid
         A->>P: records + model loaded at startup
         P-->>A: risk_probability, prediction per record
-        A->>A: warnings: outside validated range, contradicting fields
-        A-->>C: 200 predictions in request order + threshold + model_md5
+        A->>A: warnings: rare values, contradicting fields
+        A-->>C: 200: predictions in request order, threshold, model_md5
     end
-    A->>A: middleware: service log (journald): method, path, status, latency, no client IP
+    A->>A: middleware: service log (journald), no client IP
 ```
 
 </details>
 
-## Design decisions
+### Patterns
 
-| Decision | Why |
-|----------|-----|
-| **A REST API that scores a batch per call** | A sepsis alert is needed while the clinician waits, and a ward's patients for one hour fit in one request |
-| **Serving downloads the model, never builds it** | The VM runs exactly the file the release gates tested, with the `params.yaml` and metrics committed alongside it. It never retrains and holds no patient data |
-| **`model_md5` in every response** | Any prediction can be traced back to its entry in `dvc.lock`, and from there to the commit and MLflow run |
-| **One schema in `params.yaml`** | Training data and requests share the same fields, types and required fields, so the API cannot accept a field the model was not trained on |
-| **Preprocessing inside the pickled `Pipeline`** | Imputation and scaling travel with the model, so serving cannot drift from what was evaluated |
-| **The server refuses to start without a valid model** | A deployment mistake shows up once, at startup, instead of as an error on every request |
-| **Two sets of bounds: reject impossible values, warn about rare ones** | `api.limits` is wider than `validation.ranges`, because the sickest patients have extreme values and must still be scored. A wrong unit or a misspelled field must not be |
-| **No state: no database, no patient history** | Restarts lose nothing, and the model only ever sees one patient-hour at a time |
-| **A model registry, but no Docker, queue or feature store** | `make promote` registers the gated `model.pkl` in the MLflow Model Registry and moves the `@champion` alias, so the approved model and its history live in one place. The rest is one service on one VM: each would add moving parts without solving a problem we have; the VM-level choices are in [deployment.md](deployment.md#architecture) |
-| **No reverse proxy on the VM** | uvicorn listens only on localhost and the Cloudflare tunnel is the only way in, with Cloudflare handling TLS. The cost: no cap on request body size, which a reverse proxy such as nginx would add |
-| **No authentication** | A research and teaching demo with no data behind it. A real clinical integration would need auth and rate limiting first |
+| Pattern | Where |
+|---------|-------|
+| Model as a service | The model is loaded inside the API and used through REST, so a client only needs HTTP |
+| Layered architecture | Routes and schemas, then preprocessing, then the model. The schemas can be tested without the model |
+| Stateless client-server | No database and no patient history: each patient-hour is scored on its own, as in training |
+| Pipeline (pipes and filters) | The DVC stages: each one has declared inputs and outputs, and `dvc repro` only reruns what changed |
+| Single source of truth | `params.yaml` defines the fields for both training and the API |
+
+### Design decisions
+
+| Decision | Reason |
+|----------|--------|
+| A REST API that scores a batch per call | The patients of a ward for one hour fit in one request |
+| The API never trains | It only loads `model.pkl`, which is the exact file the release gates tested. It does not need the training data |
+| `model_md5` in every response | Any prediction can be traced back to `dvc.lock`, and from there to the commit and the MLflow run |
+| Preprocessing inside the pickled `Pipeline` | Serving cannot drift from what was evaluated |
+| The API does not start without a valid model | A deployment error appears once, at startup, instead of on every request |
+| Reject impossible values, warn about rare ones | `api.limits` is wider than `validation.ranges` because very sick patients have extreme values and still need a score. A wrong unit or a misspelled field is rejected |
+| A model registry, but no queue or feature store | `make promote` keeps the approved model and its history in MLflow. A queue or a feature store would not solve any problem we have |
+| No authentication | It is a teaching project with no real patient data behind it. A real deployment would need authentication and rate limiting |
+
+## Physical architecture
+
+![Physical architecture](images/physical_architecture.svg)
+
+Users reach the API through Cloudflare, which forwards the requests through a tunnel to a UPC virtual
+machine. The VM only serves the API: it does not train and it has no data. It gets the code from GitHub
+and the model from DagsHub. The model is trained on our laptops, and CI runs on GitHub Actions.
+
+### Nodes
+
+| Node | What runs there | Details |
+|------|-----------------|---------|
+| User devices | Browser on `/docs`, `curl`, scripts, the smoke test | Anything that can send HTTPS |
+| Cloudflare | DNS for `astra.quick2query.com`, TLS and the public end of the tunnel | Managed service |
+| UPC VM | `cloudflared` and `uvicorn`, both as systemd services | Ubuntu, 1 vCPU, 4 GB RAM, 24 GB disk, Python 3.12. Environment installed with `uv sync --frozen --no-dev` |
+| Developer laptops | DVC pipeline, tests, `make promote` | Windows and macOS, same environment from `uv.lock` |
+| GitHub | Repository and CI (GitHub Actions, `ubuntu-latest`) | Managed service |
+| DagsHub | DVC remote (S3 API) and MLflow server with the model registry | Managed service |
+
+### Where each logical component runs
+
+| Logical component | Where |
+|-------------------|-------|
+| Routes, schemas, preprocessing, model, decision | One uvicorn worker on the VM |
+| `model.pkl` | In memory in that worker, read from `~/taed2-astra/models/`. Stored in DagsHub |
+| `params.yaml`, `metrics.json` | Git checkout on the VM. Stored in GitHub |
+| DVC pipeline | A developer laptop |
+| Release gates | A laptop before `make promote`, and GitHub Actions on every pull request |
+| Model registry and experiment tracking | MLflow on DagsHub |
+| Raw data and splits | DagsHub and the laptops, never the VM |
+
+### Network
+
+| Connection | Protocol |
+|------------|----------|
+| Client to Cloudflare | HTTPS |
+| Cloudflare to the VM | Cloudflare tunnel. `cloudflared` opens the connection from the VM to Cloudflare |
+| `cloudflared` to uvicorn | HTTP on `127.0.0.1:8000`. uvicorn only listens on localhost, so the API can only be reached through the tunnel |
+| SSH to the VM | Also through the tunnel, with the hostname `ssh-astra.quick2query.com` and `cloudflared access` |
+| VM to GitHub | SSH with a read-only deploy key, when running `make deploy` |
+| VM, laptops and CI to DagsHub | HTTPS |
+
+### Storage
+
+| What | Where | Versioned with |
+|------|-------|----------------|
+| Code, `params.yaml`, `dvc.lock`, metrics and reports | GitHub | Git |
+| Raw data, splits and `model.pkl` | DagsHub (DVC) | DVC, through the MD5s in `dvc.lock` |
+| Training runs and registered models | DagsHub (MLflow) | MLflow runs and registry versions |
+| Service log | journald on the VM | Not versioned |
+
+### Operations
+
+| Topic | How we do it |
+|-------|--------------|
+| Releasing | Pull request, CI, review, merge, `make promote` on a laptop, then `make deploy` on the VM (pulls code and model, restarts the service and runs the smoke test) |
+| Capacity | One worker on one vCPU. In our load test the limit was about 25 requests per second with 10 records each ([deployment.md](deployment.md#measured-capacity)) |
+| Availability | systemd starts both services at boot and restarts uvicorn 10 seconds after a crash |
+| Monitoring | `GET /health`, `GET /model` to see which model is live, and `make logs` / `make status` on the VM |
+| Secrets | DagsHub token in `.env` and `.dvc/config.local` on the laptops, only in `.dvc/config.local` on the VM, and as a repository secret in CI. Read-only deploy key for GitHub. Tunnel token in the `cloudflared` service. Nothing in Git |
+
+CI checks the data contract, the release gates and `dvc status` only when the `DAGSHUB_TOKEN` secret is
+set, because it needs to download the data and the model.
+
+### Design decisions
+
+| Decision | Reason |
+|----------|--------|
+| No training on the VM | The VM downloads the exact `model.pkl` in `dvc.lock`, the one that passed the gates. The full dataset would also not fit comfortably in 4 GB of RAM |
+| No data on the VM | The API does not need it, and a public server should not store patient records |
+| Cloudflare tunnel | Gives a public HTTPS address to a VM inside the university network, without managing certificates on the VM |
+| No reverse proxy | uvicorn only listens on localhost and the tunnel is the only way in. The downside is that the VM does not limit the request body size; Cloudflare's limit covers it ([deployment.md](deployment.md#measured-capacity)) |
+| systemd instead of `nohup` or `tmux` | The service survives logouts, reboots and crashes, and the logs go to journald |
+| One worker | The VM has one CPU, and each worker loads its own copy of the model |
+| No Docker | It is one service on one VM. `uv sync --frozen` already installs the exact versions, including the scikit-learn version used to pickle the model |
+| No client IPs in the logs | uvicorn runs with `--no-access-log` and the app only logs method, path, status and latency. IPs are personal data that we do not need |

@@ -22,7 +22,7 @@ disk), and how to set it up, update it and debug it.
 ```
 
 How this fits with the training pipeline, and the design choices behind it, is in
-[system_design.md](system_design.md).
+[system_design.md](system_design.md#physical-architecture).
 
 | Decision | Why |
 |----------|-----|
